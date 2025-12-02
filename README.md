@@ -92,11 +92,41 @@ process computeTask {
     cpus 2
     memory '4.GB'
     time '30m'
+    accelerator 1 // Requests 1 GPU
     
     script:
     """
     python -c "import time; print('Computing...'); time.sleep(10)"
     """
+}
+```
+
+### Data Handling
+
+**S3 Inputs:**
+To process data directly from S3 without downloading it to your local machine first, simply pass the `s3://` URI string to the process input. The executor will configure the Bacalhau job to fetch it directly.
+
+```groovy
+process analyzeS3 {
+    input:
+    val s3_path // e.g. "s3://my-bucket/data.csv"
+    
+    script:
+    """
+    # File is mounted at /inputs/<filename>
+    process_data /inputs/data.csv
+    """
+}
+```
+
+**Secrets:**
+To pass sensitive information (like API keys or AWS credentials) to the remote job, define them in your `nextflow.config` under `ext.bacalhauSecrets`. These must match environment variables available in your local shell.
+
+```groovy
+// nextflow.config
+process {
+    executor = 'bacalhau'
+    ext.bacalhauSecrets = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
 }
 ```
 
@@ -119,11 +149,12 @@ This is currently transitioning to **Phase 3** development:
 - ✅ Script and input file staging
 - ✅ Output file retrieval
 - ✅ Advanced resource management (GPU, Env Vars)
+- ✅ Native S3 Input Support
+- ✅ Secret Injection via Config
 
 **Upcoming (Phase 3):**
 - 🚧 Comprehensive error handling
 - 🚧 Performance tuning
-- 🚧 Integration with IPFS for large datasets
 - 🚧 Extensive integration testing
 
 ## Development
