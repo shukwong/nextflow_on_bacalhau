@@ -119,6 +119,22 @@ process analyzeS3 {
 }
 ```
 
+**Host Path Inputs:**
+To use files that already exist on the remote node's filesystem (where the compute job runs), use the `host://` prefix. This creates a bind mount from the host path to the container input path.
+
+```groovy
+process analyzeLocal {
+    input:
+    val local_path // e.g. "host:///data/reference_genome.fa"
+    
+    script:
+    """
+    # File is mounted at /inputs/reference_genome.fa
+    process_data /inputs/reference_genome.fa
+    """
+}
+```
+
 **Secrets:**
 To pass sensitive information (like API keys or AWS credentials) to the remote job, define them in your `nextflow.config` under `ext.bacalhauSecrets`. These must match environment variables available in your local shell.
 
@@ -150,6 +166,7 @@ This is currently transitioning to **Phase 3** development:
 - ✅ Output file retrieval
 - ✅ Advanced resource management (GPU, Env Vars)
 - ✅ Native S3 Input Support
+- ✅ Host Path Input Support
 - ✅ Secret Injection via Config
 
 **Upcoming (Phase 3):**
