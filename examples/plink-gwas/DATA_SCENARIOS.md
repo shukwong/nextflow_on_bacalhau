@@ -19,7 +19,7 @@ This document clarifies where data lives in each scenario and what moves across 
           ▼                      ▼                      ▼
 ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
 │   Node A         │   │   Node B         │   │   Node C         │
-│  (Hospital A)    │   │  (Hospital B)    │   │  (Hospital C)    │
+│  (Institute A)    │   │  (Institute B)    │   │  (Institute C)    │
 │                  │   │                  │   │                  │
 │  📁 Raw Data:    │   │  📁 Raw Data:    │   │  📁 Raw Data:    │
 │  cohort_a.bed ✅ │   │  cohort_b.bed ✅ │   │  cohort_c.bed ✅ │
@@ -61,7 +61,7 @@ This document clarifies where data lives in each scenario and what moves across 
 
 ### Use Cases
 
-- Multi-hospital genomics studies
+- Multi-Institute genomics studies
 - International consortia with data sovereignty requirements
 - Studies with IRB restrictions on data sharing
 - Privacy-preserving collaborative research
@@ -218,35 +218,35 @@ This document clarifies where data lives in each scenario and what moves across 
 
 ## Example: Real-World Federated Study
 
-**Study**: International GWAS consortium with 5 hospitals
+**Study**: International GWAS consortium with 5 Institutes
 
 ### Setup
 
 ```groovy
 // In plink-gwas-federated.nf
 params.cohorts = [
-    // US Hospital
-    [name: 'hospital_boston',
+    // US Institute
+    [name: 'Institute_boston',
      node: 'node-boston-hpc',
      data_path: '/gpfs/genomics/gwas_cohort1'],
 
-    // UK Hospital
-    [name: 'hospital_london',
+    // UK Institute
+    [name: 'Institute_london',
      node: 'node-london-hpc',
      data_path: '/mnt/nfs/genomics/uk_cohort'],
 
-    // German Hospital
-    [name: 'hospital_berlin',
+    // German Institute
+    [name: 'Institute_berlin',
      node: 'node-berlin-cluster',
      data_path: '/data/genomics/de_cohort'],
 
-    // Japanese Hospital
-    [name: 'hospital_tokyo',
+    // Japanese Institute
+    [name: 'Institute_tokyo',
      node: 'node-tokyo-hpc',
      data_path: '/scratch/genomics/jp_cohort'],
 
-    // Australian Hospital
-    [name: 'hospital_sydney',
+    // Australian Institute
+    [name: 'Institute_sydney',
      node: 'node-sydney-hpc',
      data_path: '/home/genomics/au_cohort']
 ]

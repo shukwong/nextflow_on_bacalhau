@@ -27,38 +27,38 @@ params.outdir = "${baseDir}/results"
 //   - data_path: local path (for host://) or S3 URL
 //   - s3_credentials: (optional) env vars for S3 access
 params.cohorts = [
-    // Hospital A: Data on local HPC storage
+    // Institute A: Data on local HPC storage
     [
-        name: 'hospital_a',
-        node: 'node-hospital-a',
+        name: 'Institute_a',
+        node: 'node-Institute-a',
         storage_type: 'local',
-        data_path: '/data/genomics/cohort_a/hospital_a'
+        data_path: '/data/genomics/cohort_a/Institute_a'
     ],
 
-    // Hospital B: Data in their private S3 bucket
+    // Institute B: Data in their private S3 bucket
     [
-        name: 'hospital_b',
-        node: 'node-hospital-b',
+        name: 'Institute_b',
+        node: 'node-Institute-b',
         storage_type: 's3',
-        data_path: 's3://hospital-b-genomics/cohort_b/hospital_b',
-        s3_credentials: ['HOSPITAL_B_AWS_KEY', 'HOSPITAL_B_AWS_SECRET']
+        data_path: 's3://Institute-b-genomics/cohort_b/Institute_b',
+        s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']
     ],
 
-    // Hospital C: Data on local NFS storage
+    // Institute C: Data on local NFS storage
     [
-        name: 'hospital_c',
-        node: 'node-hospital-c',
+        name: 'Institute_c',
+        node: 'node-Institute-c',
         storage_type: 'local',
-        data_path: '/mnt/nfs/genomics/hospital_c'
+        data_path: '/mnt/nfs/genomics/Institute_c'
     ],
 
-    // Hospital D: Data in their private S3 bucket (different from B)
+    // Institute D: Data in their private S3 bucket (different from B)
     [
-        name: 'hospital_d',
-        node: 'node-hospital-d',
+        name: 'Institute_d',
+        node: 'node-Institute-d',
         storage_type: 's3',
-        data_path: 's3://hospital-d-private-data/gwas/hospital_d',
-        s3_credentials: ['HOSPITAL_D_AWS_KEY', 'HOSPITAL_D_AWS_SECRET']
+        data_path: 's3://Institute-d-private-data/gwas/Institute_d',
+        s3_credentials: ['INSTITUTE_D_AWS_KEY', 'INSTITUTE_D_AWS_SECRET']
     ]
 ]
 

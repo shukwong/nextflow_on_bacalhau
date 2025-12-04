@@ -69,20 +69,20 @@ Production-ready example for distributed genomics analysis.
 ```bash
 cd examples/plink-gwas
 
-# Basic version
-nextflow run plink-gwas.nf -c plink-gwas.config \
-  --cohorts "cohort1,cohort2,cohort3"
+# Unified distributed workflow (recommended)
+# Supports mixed storage: local + S3 in one workflow
+nextflow run plink-gwas-distributed.nf -c plink-gwas.config
 
-# S3 version (recommended)
-nextflow run plink-gwas-s3.nf -c plink-gwas.config \
-  --s3_bucket "s3://my-genomics-data/plink" \
+# Basic version (for testing)
+nextflow run plink-gwas.nf -c plink-gwas.config \
   --cohorts "cohort1,cohort2,cohort3"
 ```
 
 **Features**:
 - Parallel GWAS analysis on multiple cohorts/datasets
 - Meta-analysis of combined results
-- S3 integration for cloud-native workflows
+- **Mixed storage support**: local + S3 in single workflow
+- Per-institution S3 credentials (no sharing)
 - Privacy-preserving (data stays at source)
 - Demonstrates: `plink --logistic --covar` and `plink --meta-analysis`
 
@@ -110,9 +110,10 @@ examples/
 │   └── nextflow.config
 └── plink-gwas/                # Real-world bioinformatics example
     ├── README.md
-    ├── plink-gwas.nf
-    ├── plink-gwas-s3.nf
-    └── plink-gwas.config
+    ├── plink-gwas-distributed.nf   # Unified (local + S3)
+    ├── plink-gwas.nf               # Basic (testing)
+    ├── plink-gwas.config
+    └── DATA_SCENARIOS.md
 ```
 
 ### Configuration Basics

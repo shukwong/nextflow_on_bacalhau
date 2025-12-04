@@ -21,23 +21,23 @@ The **most flexible** approach - handles **MIXED storage** in ONE workflow:
 
 ```groovy
 params.cohorts = [
-    // Hospital A: Local storage
-    [name: 'hospital_a', storage_type: 'local',
+    // Institute A: Local storage
+    [name: 'Institute_a', storage_type: 'local',
      data_path: '/data/genomics/cohort_a'],
 
-    // Hospital B: Their private S3 with their credentials
-    [name: 'hospital_b', storage_type: 's3',
-     data_path: 's3://hospital-b-genomics/cohort',
-     s3_credentials: ['HOSPITAL_B_AWS_KEY', 'HOSPITAL_B_AWS_SECRET']],
+    // Institute B: Their private S3 with their credentials
+    [name: 'Institute_b', storage_type: 's3',
+     data_path: 's3://Institute-b-genomics/cohort',
+     s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']],
 
-    // Hospital C: Local storage
-    [name: 'hospital_c', storage_type: 'local',
+    // Institute C: Local storage
+    [name: 'Institute_c', storage_type: 'local',
      data_path: '/mnt/nfs/genomics/cohort_c'],
 
-    // Hospital D: Different private S3 with their credentials
-    [name: 'hospital_d', storage_type: 's3',
-     data_path: 's3://hospital-d-data/gwas',
-     s3_credentials: ['HOSPITAL_D_AWS_KEY', 'HOSPITAL_D_AWS_SECRET']]
+    // Institute D: Different private S3 with their credentials
+    [name: 'Institute_d', storage_type: 's3',
+     data_path: 's3://Institute-d-data/gwas',
+     s3_credentials: ['INSTITUTE_D_AWS_KEY', 'INSTITUTE_D_AWS_SECRET']]
 ]
 ```
 
@@ -117,34 +117,34 @@ s3://my-genomics-data/plink/
 ```bash
 # 1. Set up S3 credentials for institutions that use S3
 #    Each institution provides their own credentials
-export HOSPITAL_B_AWS_KEY="hospital_b_access_key"
-export HOSPITAL_B_AWS_SECRET="hospital_b_secret_key"
-export HOSPITAL_D_AWS_KEY="hospital_d_access_key"
-export HOSPITAL_D_AWS_SECRET="hospital_d_secret_key"
+export INSTITUTE_B_AWS_KEY="Institute_b_access_key"
+export INSTITUTE_B_AWS_SECRET="Institute_b_secret_key"
+export INSTITUTE_D_AWS_KEY="Institute_d_access_key"
+export INSTITUTE_D_AWS_SECRET="Institute_d_secret_key"
 
 # 2. Edit plink-gwas-distributed.nf to configure your cohorts:
 params.cohorts = [
-    // Hospital A: Local storage
-    [name: 'hospital_a', node: 'node-hospital-a',
+    // Institute A: Local storage
+    [name: 'Institute_a', node: 'node-Institute-a',
      storage_type: 'local',
-     data_path: '/data/genomics/hospital_a'],
+     data_path: '/data/genomics/Institute_a'],
 
-    // Hospital B: Private S3 bucket
-    [name: 'hospital_b', node: 'node-hospital-b',
+    // Institute B: Private S3 bucket
+    [name: 'Institute_b', node: 'node-Institute-b',
      storage_type: 's3',
-     data_path: 's3://hospital-b-genomics/cohort_b',
-     s3_credentials: ['HOSPITAL_B_AWS_KEY', 'HOSPITAL_B_AWS_SECRET']],
+     data_path: 's3://Institute-b-genomics/cohort_b',
+     s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']],
 
-    // Hospital C: Local storage
-    [name: 'hospital_c', node: 'node-hospital-c',
+    // Institute C: Local storage
+    [name: 'Institute_c', node: 'node-Institute-c',
      storage_type: 'local',
-     data_path: '/mnt/nfs/genomics/hospital_c'],
+     data_path: '/mnt/nfs/genomics/Institute_c'],
 
-    // Hospital D: Different private S3
-    [name: 'hospital_d', node: 'node-hospital-d',
+    // Institute D: Different private S3
+    [name: 'Institute_d', node: 'node-Institute-d',
      storage_type: 's3',
-     data_path: 's3://hospital-d-private/gwas/cohort_d',
-     s3_credentials: ['HOSPITAL_D_AWS_KEY', 'HOSPITAL_D_AWS_SECRET']]
+     data_path: 's3://Institute-d-private/gwas/cohort_d',
+     s3_credentials: ['INSTITUTE_D_AWS_KEY', 'INSTITUTE_D_AWS_SECRET']]
 ]
 
 # 3. Run the workflow
@@ -153,10 +153,10 @@ nextflow run plink-gwas-distributed.nf -c plink-gwas.config \
 ```
 
 **What happens**:
-1. **Hospital A**: Processes local data on `node-hospital-a` (no data movement)
-2. **Hospital B**: Fetches from their S3 using their credentials, processes on `node-hospital-b`
-3. **Hospital C**: Processes local data on `node-hospital-c` (no data movement)
-4. **Hospital D**: Fetches from their S3 using their credentials, processes on `node-hospital-d`
+1. **Institute A**: Processes local data on `node-Institute-a` (no data movement)
+2. **Institute B**: Fetches from their S3 using their credentials, processes on `node-Institute-b`
+3. **Institute C**: Processes local data on `node-Institute-c` (no data movement)
+4. **Institute D**: Fetches from their S3 using their credentials, processes on `node-Institute-d`
 5. Only GWAS summary statistics are collected
 6. Meta-analysis combines the results
 7. **No raw genotype data shared between institutions**
