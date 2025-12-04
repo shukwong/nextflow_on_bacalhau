@@ -134,6 +134,46 @@ process compute {
 }
 ```
 
+## Real-World Example: PLINK GWAS Meta-Analysis
+
+### Option 3: Distributed Genomics Analysis
+
+The `plink-gwas.nf` and `plink-gwas-s3.nf` examples demonstrate a real-world bioinformatics workflow:
+
+**Use Case**: Run GWAS (Genome-Wide Association Study) analysis on multiple cohorts in parallel, then perform meta-analysis.
+
+```bash
+cd examples
+
+# Basic version (local files)
+nextflow run plink-gwas.nf -c plink-gwas.config \
+  --cohorts "cohort1,cohort2,cohort3" \
+  --data_dir "data/plink" \
+  --outdir "results"
+
+# S3 version (recommended for distributed computing)
+export AWS_ACCESS_KEY_ID="your_key"
+export AWS_SECRET_ACCESS_KEY="your_secret"
+
+nextflow run plink-gwas-s3.nf -c plink-gwas.config \
+  --s3_bucket "s3://my-genomics-data/plink" \
+  --cohorts "cohort1,cohort2,cohort3" \
+  --outdir "results"
+```
+
+**What it does**:
+1. Runs `plink --file mydata --logistic --covar mycovar.cov` on each cohort in parallel (each on a different Bacalhau node)
+2. Collects all results
+3. Performs meta-analysis using `plink --meta-analysis ...` to combine results
+
+**Key Features**:
+- **Data Privacy**: Each cohort's raw data stays at source, only summary statistics are shared
+- **Scalability**: Process hundreds of cohorts simultaneously
+- **S3 Integration**: Direct access to genomics data in cloud storage
+- **No Data Movement**: Bacalhau brings compute to the data
+
+**📖 Full Documentation**: See [PLINK_GWAS_README.md](PLINK_GWAS_README.md) for detailed setup, data preparation, and usage instructions.
+
 ## Troubleshooting
 
 ### Plugin not found:
