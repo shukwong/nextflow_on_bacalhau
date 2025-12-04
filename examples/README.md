@@ -20,76 +20,122 @@ This directory contains example workflows demonstrating the Bacalhau executor.
    ./gradlew publishToMavenLocal
    ```
 
-## Quick Start
+## Examples Overview
 
-### Option 1: Absolute Minimal (Single Task)
+### 1. Minimal Example (Quickstart)
 
-The `minimal.nf` example runs a single task - perfect for initial testing:
+**Location**: `minimal.nf` and `minimal.config` (in this directory)
+
+The absolute simplest example - perfect for testing the executor is working.
 
 ```bash
 cd examples
 nextflow run minimal.nf -c minimal.config
 ```
 
-Output:
-```
-Hello from Bacalhau!
-```
+**Output**: Just prints "Hello from Bacalhau!"
 
-### Option 2: Hello World (Multiple Tasks)
+📖 [Start here if you're new to the Bacalhau executor]
 
-The `hello-world.nf` example demonstrates parallel execution:
+---
+
+### 2. Hello World (Parallel Execution)
+
+**Location**: [`hello-world/`](hello-world/)
+
+Demonstrates parallel task execution with multiple greetings.
 
 ```bash
-cd examples
+cd examples/hello-world
 nextflow run hello-world.nf
 ```
 
-### What it does:
+**Features**:
+- 5 parallel tasks with different greetings
+- Shows distributed execution across Bacalhau nodes
+- Includes comprehensive configuration examples
+- Generates execution reports
 
-- Creates 5 parallel tasks with different greetings
-- Each task runs in an Ubuntu container on Bacalhau
-- Prints greeting, hostname, and timestamp
-- Demonstrates basic Bacalhau executor functionality
+📖 **[Full Documentation →](hello-world/README.md)**
 
-### Expected output:
+---
+
+### 3. PLINK GWAS Meta-Analysis (Real-World Bioinformatics)
+
+**Location**: [`plink-gwas/`](plink-gwas/)
+
+Production-ready example for distributed genomics analysis.
+
+```bash
+cd examples/plink-gwas
+
+# Basic version
+nextflow run plink-gwas.nf -c plink-gwas.config \
+  --cohorts "cohort1,cohort2,cohort3"
+
+# S3 version (recommended)
+nextflow run plink-gwas-s3.nf -c plink-gwas.config \
+  --s3_bucket "s3://my-genomics-data/plink" \
+  --cohorts "cohort1,cohort2,cohort3"
+```
+
+**Features**:
+- Parallel GWAS analysis on multiple cohorts/datasets
+- Meta-analysis of combined results
+- S3 integration for cloud-native workflows
+- Privacy-preserving (data stays at source)
+- Demonstrates: `plink --logistic --covar` and `plink --meta-analysis`
+
+**Use Cases**:
+- Multi-center genomics studies
+- Chromosome-wise parallel analysis
+- Large-scale distributed GWAS
+
+📖 **[Full Documentation →](plink-gwas/README.md)**
+
+---
+
+## Quick Reference
+
+### File Organization
 
 ```
-N E X T F L O W  ~  version 23.10.x
-Launching `hello-world.nf` [...]
-
-executor >  bacalhau (5)
-[xx/xxxxxx] process > sayHello (5) [100%] 5 of 5 ✔
-
-Hello from Bacalhau distributed compute!
-Running on node: bacalhau-node-xyz
-Current time: Wed Dec  4 20:00:00 UTC 2024
-
-Hola from Bacalhau distributed compute!
-Running on node: bacalhau-node-abc
-...
+examples/
+├── README.md                  # This file
+├── minimal.nf                 # Simplest example (1 task)
+├── minimal.config             # Minimal configuration
+├── hello-world/               # Parallel execution example
+│   ├── README.md
+│   ├── hello-world.nf
+│   └── nextflow.config
+└── plink-gwas/                # Real-world bioinformatics example
+    ├── README.md
+    ├── plink-gwas.nf
+    ├── plink-gwas-s3.nf
+    └── plink-gwas.config
 ```
 
-## Configuration
+### Configuration Basics
 
-The `nextflow.config` file shows all available Bacalhau-specific settings:
+All examples use the Bacalhau executor with similar configuration patterns:
 
 ```groovy
 process {
     executor = 'bacalhau'
+    container = 'ubuntu:latest'
 
     ext {
-        bacalhauNode = 'https://api.bacalhau.org'  // API endpoint
-        waitForCompletion = true                    // Wait for jobs
-        maxRetries = 3                             // Retry failed jobs
-        storageEngine = 'ipfs'                     // Storage backend
+        bacalhauNode = 'https://api.bacalhau.org'
+        waitForCompletion = true
+        maxRetries = 3
+        storageEngine = 'ipfs'
     }
 }
 ```
 
-## Advanced Examples
+### Advanced Features
 
-### Example with S3 Input:
+#### S3 Input Support
 
 ```groovy
 process analyzeData {
@@ -100,24 +146,22 @@ process analyzeData {
 
     script:
     """
-    # File is automatically mounted at /inputs/data.csv
-    python -c "import pandas as pd; print(pd.read_csv('/inputs/data.csv'))"
+    # File automatically mounted at /inputs/data.csv
+    python process_data.py /inputs/data.csv
     """
 }
 ```
 
-### Example with Secrets:
+#### Secret Injection
 
 ```groovy
 // In nextflow.config
 process {
     ext.bacalhauSecrets = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
 }
-
-// These environment variables are securely injected into your job
 ```
 
-### Example with Resources:
+#### Resource Constraints
 
 ```groovy
 process compute {
@@ -134,56 +178,26 @@ process compute {
 }
 ```
 
-## Real-World Example: PLINK GWAS Meta-Analysis
+#### Host Path Mounting
 
-### Option 3: Distributed Genomics Analysis
+```groovy
+input:
+val host_path  // e.g., "host:///data/reference_genome.fa"
 
-The `plink-gwas.nf` and `plink-gwas-s3.nf` examples demonstrate a real-world bioinformatics workflow:
-
-**Use Case**: Run GWAS (Genome-Wide Association Study) analysis on multiple cohorts in parallel, then perform meta-analysis.
-
-```bash
-cd examples
-
-# Basic version (local files)
-nextflow run plink-gwas.nf -c plink-gwas.config \
-  --cohorts "cohort1,cohort2,cohort3" \
-  --data_dir "data/plink" \
-  --outdir "results"
-
-# S3 version (recommended for distributed computing)
-export AWS_ACCESS_KEY_ID="your_key"
-export AWS_SECRET_ACCESS_KEY="your_secret"
-
-nextflow run plink-gwas-s3.nf -c plink-gwas.config \
-  --s3_bucket "s3://my-genomics-data/plink" \
-  --cohorts "cohort1,cohort2,cohort3" \
-  --outdir "results"
+// File mounted from remote node's filesystem
 ```
-
-**What it does**:
-1. Runs `plink --file mydata --logistic --covar mycovar.cov` on each cohort in parallel (each on a different Bacalhau node)
-2. Collects all results
-3. Performs meta-analysis using `plink --meta-analysis ...` to combine results
-
-**Key Features**:
-- **Data Privacy**: Each cohort's raw data stays at source, only summary statistics are shared
-- **Scalability**: Process hundreds of cohorts simultaneously
-- **S3 Integration**: Direct access to genomics data in cloud storage
-- **No Data Movement**: Bacalhau brings compute to the data
-
-**📖 Full Documentation**: See [PLINK_GWAS_README.md](PLINK_GWAS_README.md) for detailed setup, data preparation, and usage instructions.
 
 ## Troubleshooting
 
-### Plugin not found:
+### Plugin not found
+
 ```bash
-# Rebuild and republish
 cd ..
 ./gradlew clean publishToMavenLocal
 ```
 
-### Bacalhau CLI not found:
+### Bacalhau CLI not found
+
 ```bash
 # Check PATH
 which bacalhau
@@ -192,7 +206,8 @@ which bacalhau
 process.ext.bacalhauCliPath = '/path/to/bacalhau'
 ```
 
-### Jobs not starting:
+### Jobs not starting
+
 ```bash
 # Check Bacalhau node connectivity
 bacalhau node list
@@ -201,8 +216,38 @@ bacalhau node list
 bacalhau job list
 ```
 
-## More Information
+### View logs
+
+```bash
+# Nextflow log
+.nextflow.log
+
+# Execution trace (if enabled in config)
+cat trace.txt
+```
+
+## Learning Path
+
+**For beginners**:
+1. Start with `minimal.nf` to verify everything works
+2. Try `hello-world/` to understand parallel execution
+3. Study the configurations to learn available options
+
+**For bioinformatics users**:
+1. Jump to `plink-gwas/` for a real-world genomics workflow
+2. Adapt the PLINK example to your specific analysis needs
+3. Learn S3 integration for cloud-native workflows
+
+## Resources
 
 - [Nextflow Documentation](https://www.nextflow.io/docs/latest/)
 - [Bacalhau Documentation](https://docs.bacalhau.org/)
 - [Plugin README](../README.md)
+- [PLINK Documentation](https://www.cog-genomics.org/plink/)
+
+## Support
+
+For issues or questions:
+- [GitHub Issues](https://github.com/nextflow-io/nextflow-bacalhau-executor/issues)
+- [Nextflow Community Forum](https://community.nextflow.io)
+- [Bacalhau Slack](https://bacalhauproject.slack.com)
