@@ -12,6 +12,7 @@ This plugin enables Nextflow workflows to execute on Bacalhau's distributed comp
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
 2. **Nextflow**: Version 23.10.0 or later
+3. **Java**: JDK 11 or 17 (required for building the plugin)
 
 ### Build and Install
 
@@ -156,23 +157,28 @@ process {
 
 ## Development Status
 
-This is currently transitioning to **Phase 3** development:
-
-**Completed (Phase 1 & 2):**
+**Completed (Phase 1, 2 & 3):**
 - ✅ Core executor infrastructure
 - ✅ Basic job submission and monitoring
 - ✅ Docker container support
 - ✅ Script and input file staging
-- ✅ Output file retrieval
+- ✅ Output file retrieval and verification
 - ✅ Advanced resource management (GPU, Env Vars)
 - ✅ Native S3 Input Support
 - ✅ Host Path Input Support
 - ✅ Secret Injection via Config
+- ✅ Comprehensive error handling with timeouts
+- ✅ Configuration validation and loading
+- ✅ Thread-safe synchronization
+- ✅ Strict job ID validation
+- ✅ JSON-based queue status parsing
+- ✅ Input validation and security hardening
 
-**Upcoming (Phase 3):**
-- 🚧 Comprehensive error handling
-- 🚧 Performance tuning
-- 🚧 Extensive integration testing
+**Upcoming (Phase 4):**
+- 🚧 Performance tuning and optimization
+- 🚧 Extensive integration testing with live Bacalhau cluster
+- 🚧 Advanced networking configuration
+- 🚧 Comprehensive documentation and examples
 
 ## Development
 
