@@ -13,10 +13,43 @@ This approach is ideal for:
 - Chromosome-wise analysis (run GWAS per chromosome in parallel)
 - Privacy-preserving analysis (data stays at source, only summary statistics shared)
 
+## Data Location Scenarios
+
+This example supports three different data distribution models:
+
+### 🏥 Scenario 1: Federated (Data on Remote Nodes) **← RECOMMENDED FOR PRIVACY**
+**File**: `plink-gwas-federated.nf`
+
+- **Hospital A's** data stays on **Node A**
+- **Hospital B's** data stays on **Node B**
+- **Hospital C's** data stays on **Node C**
+- Each node processes its own local data
+- Only summary statistics are shared
+- ✅ True privacy-preserving analysis
+- ✅ No raw data leaves institutions
+- ✅ HIPAA/GDPR compliant
+
+### ☁️ Scenario 2: Centralized Cloud Storage (S3)
+**File**: `plink-gwas-s3.nf`
+
+- All data in one S3 bucket
+- Each Bacalhau node fetches its cohort from S3
+- Good for cloud-native workflows
+- ⚠️ Requires data centralization
+
+### 💻 Scenario 3: Local Staging
+**File**: `plink-gwas.nf`
+
+- Data staged from where Nextflow runs
+- Files uploaded to Bacalhau jobs
+- Good for testing/development
+- ⚠️ Not suitable for large datasets
+
 ## Files
 
-- `plink-gwas.nf` - Basic version with local/mounted inputs
-- `plink-gwas-s3.nf` - S3-based version (recommended for distributed computing)
+- `plink-gwas-federated.nf` - **Federated version** (data on remote nodes)
+- `plink-gwas-s3.nf` - S3-based version (centralized cloud storage)
+- `plink-gwas.nf` - Basic version (local/staged files)
 - `plink-gwas.config` - Configuration file
 
 ## Prerequisites
@@ -62,7 +95,39 @@ s3://my-genomics-data/plink/
 
 ## Usage
 
-### Option 1: Basic Version (Local Files)
+### Option 1: Federated Version (Data on Remote Nodes) **← RECOMMENDED**
+
+**Best for**: Multi-institutional studies where data privacy is critical
+
+```bash
+# Edit the workflow to specify your node topology
+# In plink-gwas-federated.nf, update:
+params.cohorts = [
+    [name: 'hospital_a', node: 'node-hospital-a', data_path: '/data/genomics/hospital_a'],
+    [name: 'hospital_b', node: 'node-hospital-b', data_path: '/data/genomics/hospital_b'],
+    [name: 'hospital_c', node: 'node-hospital-c', data_path: '/data/genomics/hospital_c']
+]
+
+# Run the workflow
+nextflow run plink-gwas-federated.nf -c plink-gwas.config \
+  --outdir "results"
+```
+
+**What happens**:
+1. Hospital A's data at `/data/genomics/hospital_a` is processed on `node-hospital-a`
+2. Hospital B's data at `/data/genomics/hospital_b` is processed on `node-hospital-b`
+3. Hospital C's data at `/data/genomics/hospital_c` is processed on `node-hospital-c`
+4. Only GWAS summary statistics (p-values, effect sizes) are collected
+5. Meta-analysis combines the summary statistics
+6. **No raw genotype data ever leaves the source institution**
+
+**Key features**:
+- Uses `host://` prefix to mount data from remote node's filesystem
+- Each Bacalhau job targets a specific node
+- Privacy audit report generated automatically
+- HIPAA/GDPR compliant
+
+### Option 2: Basic Version (Local Files)
 
 ```bash
 # Run with default cohorts
@@ -75,7 +140,7 @@ nextflow run plink-gwas.nf -c plink-gwas.config \
   --outdir "results"
 ```
 
-### Option 2: S3 Version (Recommended for Distributed Computing)
+### Option 3: S3 Version (Cloud-Native Workflows)
 
 ```bash
 # Set up AWS credentials (these will be securely passed to Bacalhau jobs)
