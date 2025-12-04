@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 
 /*
- * PLINK GWAS Meta-Analysis - Unified Distributed Workflow
+ * PLINK GWAS Meta-Analysis - Federated Workflow
  *
- * This workflow supports MIXED data locations in a single run:
+ * This workflow supports federated analysis with MIXED data locations:
  * - Institution A: Data on local node filesystem (host://)
  * - Institution B: Data in their private S3 bucket (s3://)
  * - Institution C: Data on local node filesystem (host://)

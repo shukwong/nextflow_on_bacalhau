@@ -13,9 +13,9 @@ This approach is ideal for:
 - Chromosome-wise analysis (run GWAS per chromosome in parallel)
 - Privacy-preserving analysis (data stays at source, only summary statistics shared)
 
-## ⭐ Unified Distributed Workflow (NEW!)
+## ⭐ Federated Workflow (NEW!)
 
-**File**: `plink-gwas-distributed.nf` **← RECOMMENDED**
+**File**: `plink-gwas-federated.nf` **← RECOMMENDED**
 
 The **most flexible** approach - handles **MIXED storage** in ONE workflow:
 
@@ -60,7 +60,7 @@ Development/testing (data staged from local machine)
 
 ## Files
 
-- `plink-gwas-distributed.nf` - ⭐ **RECOMMENDED** (mixed local + S3)
+- `plink-gwas-federated.nf` - ⭐ **RECOMMENDED** (mixed local + S3)
 - `plink-gwas-federated.nf` - Local storage only
 - `plink-gwas-s3.nf` - S3 storage only
 - `plink-gwas.nf` - Basic (testing)
@@ -110,7 +110,7 @@ s3://my-genomics-data/plink/
 
 ## Usage
 
-### Option 1: Unified Distributed Workflow (Mixed Storage) **← RECOMMENDED**
+### Option 1: Federated Workflow (Mixed Storage) **← RECOMMENDED**
 
 **Best for**: Real-world multi-institution studies with mixed storage
 
@@ -122,7 +122,7 @@ export INSTITUTE_B_AWS_SECRET="Institute_b_secret_key"
 export INSTITUTE_D_AWS_KEY="Institute_d_access_key"
 export INSTITUTE_D_AWS_SECRET="Institute_d_secret_key"
 
-# 2. Edit plink-gwas-distributed.nf to configure your cohorts:
+# 2. Edit plink-gwas-federated.nf to configure your cohorts:
 params.cohorts = [
     // Institute A: Local storage
     [name: 'Institute_a', node: 'node-Institute-a',
@@ -148,7 +148,7 @@ params.cohorts = [
 ]
 
 # 3. Run the workflow
-nextflow run plink-gwas-distributed.nf -c plink-gwas.config \
+nextflow run plink-gwas-federated.nf -c plink-gwas.config \
   --outdir "results"
 ```
 
