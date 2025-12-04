@@ -13,44 +13,59 @@ This approach is ideal for:
 - Chromosome-wise analysis (run GWAS per chromosome in parallel)
 - Privacy-preserving analysis (data stays at source, only summary statistics shared)
 
-## Data Location Scenarios
+## ⭐ Unified Distributed Workflow (NEW!)
 
-This example supports three different data distribution models:
+**File**: `plink-gwas-distributed.nf` **← RECOMMENDED**
 
-### 🏥 Scenario 1: Federated (Data on Remote Nodes) **← RECOMMENDED FOR PRIVACY**
-**File**: `plink-gwas-federated.nf`
+The **most flexible** approach - handles **MIXED storage** in ONE workflow:
 
-- **Hospital A's** data stays on **Node A**
-- **Hospital B's** data stays on **Node B**
-- **Hospital C's** data stays on **Node C**
-- Each node processes its own local data
-- Only summary statistics are shared
-- ✅ True privacy-preserving analysis
-- ✅ No raw data leaves institutions
-- ✅ HIPAA/GDPR compliant
+```groovy
+params.cohorts = [
+    // Hospital A: Local storage
+    [name: 'hospital_a', storage_type: 'local',
+     data_path: '/data/genomics/cohort_a'],
 
-### ☁️ Scenario 2: Centralized Cloud Storage (S3)
-**File**: `plink-gwas-s3.nf`
+    // Hospital B: Their private S3 with their credentials
+    [name: 'hospital_b', storage_type: 's3',
+     data_path: 's3://hospital-b-genomics/cohort',
+     s3_credentials: ['HOSPITAL_B_AWS_KEY', 'HOSPITAL_B_AWS_SECRET']],
 
-- All data in one S3 bucket
-- Each Bacalhau node fetches its cohort from S3
-- Good for cloud-native workflows
-- ⚠️ Requires data centralization
+    // Hospital C: Local storage
+    [name: 'hospital_c', storage_type: 'local',
+     data_path: '/mnt/nfs/genomics/cohort_c'],
 
-### 💻 Scenario 3: Local Staging
-**File**: `plink-gwas.nf`
+    // Hospital D: Different private S3 with their credentials
+    [name: 'hospital_d', storage_type: 's3',
+     data_path: 's3://hospital-d-data/gwas',
+     s3_credentials: ['HOSPITAL_D_AWS_KEY', 'HOSPITAL_D_AWS_SECRET']]
+]
+```
 
-- Data staged from where Nextflow runs
-- Files uploaded to Bacalhau jobs
-- Good for testing/development
-- ⚠️ Not suitable for large datasets
+✅ **ONE workflow, multiple storage types**
+✅ **Each institution keeps their own storage**
+✅ **Per-institution S3 credentials (no sharing)**
+✅ **Maximum privacy and flexibility**
+✅ **Real-world multi-institution model**
+
+## Other Workflow Variants
+
+### `plink-gwas-federated.nf`
+Local storage only (all cohorts on their nodes)
+
+### `plink-gwas-s3.nf`
+S3 storage only (all cohorts in one/shared S3)
+
+### `plink-gwas.nf`
+Development/testing (data staged from local machine)
 
 ## Files
 
-- `plink-gwas-federated.nf` - **Federated version** (data on remote nodes)
-- `plink-gwas-s3.nf` - S3-based version (centralized cloud storage)
-- `plink-gwas.nf` - Basic version (local/staged files)
-- `plink-gwas.config` - Configuration file
+- `plink-gwas-distributed.nf` - ⭐ **RECOMMENDED** (mixed local + S3)
+- `plink-gwas-federated.nf` - Local storage only
+- `plink-gwas-s3.nf` - S3 storage only
+- `plink-gwas.nf` - Basic (testing)
+- `plink-gwas.config` - Configuration
+- `DATA_SCENARIOS.md` - Detailed guide
 
 ## Prerequisites
 
@@ -95,37 +110,64 @@ s3://my-genomics-data/plink/
 
 ## Usage
 
-### Option 1: Federated Version (Data on Remote Nodes) **← RECOMMENDED**
+### Option 1: Unified Distributed Workflow (Mixed Storage) **← RECOMMENDED**
 
-**Best for**: Multi-institutional studies where data privacy is critical
+**Best for**: Real-world multi-institution studies with mixed storage
 
 ```bash
-# Edit the workflow to specify your node topology
-# In plink-gwas-federated.nf, update:
+# 1. Set up S3 credentials for institutions that use S3
+#    Each institution provides their own credentials
+export HOSPITAL_B_AWS_KEY="hospital_b_access_key"
+export HOSPITAL_B_AWS_SECRET="hospital_b_secret_key"
+export HOSPITAL_D_AWS_KEY="hospital_d_access_key"
+export HOSPITAL_D_AWS_SECRET="hospital_d_secret_key"
+
+# 2. Edit plink-gwas-distributed.nf to configure your cohorts:
 params.cohorts = [
-    [name: 'hospital_a', node: 'node-hospital-a', data_path: '/data/genomics/hospital_a'],
-    [name: 'hospital_b', node: 'node-hospital-b', data_path: '/data/genomics/hospital_b'],
-    [name: 'hospital_c', node: 'node-hospital-c', data_path: '/data/genomics/hospital_c']
+    // Hospital A: Local storage
+    [name: 'hospital_a', node: 'node-hospital-a',
+     storage_type: 'local',
+     data_path: '/data/genomics/hospital_a'],
+
+    // Hospital B: Private S3 bucket
+    [name: 'hospital_b', node: 'node-hospital-b',
+     storage_type: 's3',
+     data_path: 's3://hospital-b-genomics/cohort_b',
+     s3_credentials: ['HOSPITAL_B_AWS_KEY', 'HOSPITAL_B_AWS_SECRET']],
+
+    // Hospital C: Local storage
+    [name: 'hospital_c', node: 'node-hospital-c',
+     storage_type: 'local',
+     data_path: '/mnt/nfs/genomics/hospital_c'],
+
+    // Hospital D: Different private S3
+    [name: 'hospital_d', node: 'node-hospital-d',
+     storage_type: 's3',
+     data_path: 's3://hospital-d-private/gwas/cohort_d',
+     s3_credentials: ['HOSPITAL_D_AWS_KEY', 'HOSPITAL_D_AWS_SECRET']]
 ]
 
-# Run the workflow
-nextflow run plink-gwas-federated.nf -c plink-gwas.config \
+# 3. Run the workflow
+nextflow run plink-gwas-distributed.nf -c plink-gwas.config \
   --outdir "results"
 ```
 
 **What happens**:
-1. Hospital A's data at `/data/genomics/hospital_a` is processed on `node-hospital-a`
-2. Hospital B's data at `/data/genomics/hospital_b` is processed on `node-hospital-b`
-3. Hospital C's data at `/data/genomics/hospital_c` is processed on `node-hospital-c`
-4. Only GWAS summary statistics (p-values, effect sizes) are collected
-5. Meta-analysis combines the summary statistics
-6. **No raw genotype data ever leaves the source institution**
+1. **Hospital A**: Processes local data on `node-hospital-a` (no data movement)
+2. **Hospital B**: Fetches from their S3 using their credentials, processes on `node-hospital-b`
+3. **Hospital C**: Processes local data on `node-hospital-c` (no data movement)
+4. **Hospital D**: Fetches from their S3 using their credentials, processes on `node-hospital-d`
+5. Only GWAS summary statistics are collected
+6. Meta-analysis combines the results
+7. **No raw genotype data shared between institutions**
+8. **No S3 credentials shared between institutions**
 
 **Key features**:
-- Uses `host://` prefix to mount data from remote node's filesystem
-- Each Bacalhau job targets a specific node
-- Privacy audit report generated automatically
-- HIPAA/GDPR compliant
+- ✅ Mixed storage (local + S3) in ONE workflow
+- ✅ Per-institution S3 credentials
+- ✅ Maximum flexibility
+- ✅ Privacy audit report
+- ✅ HIPAA/GDPR compliant
 
 ### Option 2: Basic Version (Local Files)
 
