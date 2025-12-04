@@ -16,51 +16,37 @@
  * - Only shares summary statistics
  */
 
-// Parameters
+// ==============================================================================
+// CONFIGURATION
+// ==============================================================================
+// IMPORTANT: Configure your cohorts in plink-gwas.config
+// This keeps configuration separate from workflow code
+// ==============================================================================
+
+// Default parameters (override in config file)
 params.outdir = "${baseDir}/results"
+params.cohorts = []  // Defined in plink-gwas.config
 
-// Define cohorts with mixed storage locations
-// Each cohort specifies:
-//   - name: cohort identifier
-//   - node: which Bacalhau node to run on
-//   - storage_type: 'local' or 's3'
-//   - data_path: local path (for host://) or S3 URL
-//   - s3_credentials: (optional) env vars for S3 access
-params.cohorts = [
-    // Institute A: Data on local HPC storage
-    [
-        name: 'Institute_a',
-        node: 'node-Institute-a',
-        storage_type: 'local',
-        data_path: '/data/genomics/cohort_a/Institute_a'
-    ],
+// Validate cohorts are defined
+if (!params.cohorts || params.cohorts.isEmpty()) {
+    error """
+    ERROR: No cohorts defined!
 
-    // Institute B: Data in their private S3 bucket
-    [
-        name: 'Institute_b',
-        node: 'node-Institute-b',
-        storage_type: 's3',
-        data_path: 's3://Institute-b-genomics/cohort_b/Institute_b',
-        s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']
-    ],
+    Please configure your cohorts in plink-gwas.config:
 
-    // Institute C: Data on local NFS storage
-    [
-        name: 'Institute_c',
-        node: 'node-Institute-c',
-        storage_type: 'local',
-        data_path: '/mnt/nfs/genomics/Institute_c'
-    ],
-
-    // Institute D: Data in their private S3 bucket (different from B)
-    [
-        name: 'Institute_d',
-        node: 'node-Institute-d',
-        storage_type: 's3',
-        data_path: 's3://Institute-d-private-data/gwas/Institute_d',
-        s3_credentials: ['INSTITUTE_D_AWS_KEY', 'INSTITUTE_D_AWS_SECRET']
-    ]
-]
+    params {
+        cohorts = [
+            [
+                name: 'institute_a',
+                node: 'node-institute-a',
+                storage_type: 'local',
+                data_path: '/data/genomics/institute_a'
+            ],
+            // ... more cohorts
+        ]
+    }
+    """
+}
 
 // GWAS process - handles both local and S3 data
 process runGWAS {

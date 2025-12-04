@@ -115,41 +115,41 @@ s3://my-genomics-data/plink/
 **Best for**: Real-world multi-institution studies with mixed storage
 
 ```bash
-# 1. Set up S3 credentials for institutions that use S3
+# 1. Configure your cohorts in plink-gwas.config
+#    Edit the params.cohorts section:
+
+params {
+    cohorts = [
+        // Institute A: Local storage
+        [
+            name: 'institute_a',
+            node: 'node-institute-a',
+            storage_type: 'local',
+            data_path: '/data/genomics/institute_a'
+        ],
+
+        // Institute B: Private S3 bucket
+        [
+            name: 'institute_b',
+            node: 'node-institute-b',
+            storage_type: 's3',
+            data_path: 's3://institute-b-genomics/cohort_b',
+            s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']
+        ],
+
+        // ... add more institutes
+    ]
+}
+
+# 2. Set up S3 credentials for institutions that use S3
 #    Each institution provides their own credentials
-export INSTITUTE_B_AWS_KEY="Institute_b_access_key"
-export INSTITUTE_B_AWS_SECRET="Institute_b_secret_key"
-export INSTITUTE_D_AWS_KEY="Institute_d_access_key"
-export INSTITUTE_D_AWS_SECRET="Institute_d_secret_key"
-
-# 2. Edit plink-gwas-federated.nf to configure your cohorts:
-params.cohorts = [
-    // Institute A: Local storage
-    [name: 'Institute_a', node: 'node-Institute-a',
-     storage_type: 'local',
-     data_path: '/data/genomics/Institute_a'],
-
-    // Institute B: Private S3 bucket
-    [name: 'Institute_b', node: 'node-Institute-b',
-     storage_type: 's3',
-     data_path: 's3://Institute-b-genomics/cohort_b',
-     s3_credentials: ['INSTITUTE_B_AWS_KEY', 'INSTITUTE_B_AWS_SECRET']],
-
-    // Institute C: Local storage
-    [name: 'Institute_c', node: 'node-Institute-c',
-     storage_type: 'local',
-     data_path: '/mnt/nfs/genomics/Institute_c'],
-
-    // Institute D: Different private S3
-    [name: 'Institute_d', node: 'node-Institute-d',
-     storage_type: 's3',
-     data_path: 's3://Institute-d-private/gwas/cohort_d',
-     s3_credentials: ['INSTITUTE_D_AWS_KEY', 'INSTITUTE_D_AWS_SECRET']]
-]
+export INSTITUTE_B_AWS_KEY="institute_b_access_key"
+export INSTITUTE_B_AWS_SECRET="institute_b_secret_key"
+export INSTITUTE_D_AWS_KEY="institute_d_access_key"
+export INSTITUTE_D_AWS_SECRET="institute_d_secret_key"
 
 # 3. Run the workflow
-nextflow run plink-gwas-federated.nf -c plink-gwas.config \
-  --outdir "results"
+nextflow run plink-gwas-federated.nf -c plink-gwas.config
 ```
 
 **What happens**:
