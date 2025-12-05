@@ -69,13 +69,8 @@ Production-ready example for distributed genomics analysis.
 ```bash
 cd examples/plink-gwas
 
-# Federated workflow (recommended)
-# Supports mixed storage: local + S3 in one workflow
-nextflow run plink-gwas-federated.nf -c plink-gwas.config
-
-# Basic version (for testing)
-nextflow run plink-gwas.nf -c plink-gwas.config \
-  --cohorts "cohort1,cohort2,cohort3"
+# Run the workflow (supports mixed storage: local + S3)
+nextflow run plink-gwas.nf -c plink-gwas.config
 ```
 
 **Features**:
@@ -110,10 +105,9 @@ examples/
 │   └── nextflow.config
 └── plink-gwas/                # Real-world bioinformatics example
     ├── README.md
-    ├── plink-gwas-federated.nf   # Federated (local + S3)
-    ├── plink-gwas.nf               # Basic (testing)
-    ├── plink-gwas.config
-    └── DATA_SCENARIOS.md
+    ├── plink-gwas.nf              # Main workflow (mixed local + S3)
+    ├── plink-gwas.config          # Configuration
+    └── DATA_SCENARIOS.md          # Detailed guide
 ```
 
 ### Configuration Basics

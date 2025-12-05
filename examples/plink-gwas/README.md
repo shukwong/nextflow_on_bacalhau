@@ -13,11 +13,11 @@ This approach is ideal for:
 - Chromosome-wise analysis (run GWAS per chromosome in parallel)
 - Privacy-preserving analysis (data stays at source, only summary statistics shared)
 
-## ⭐ Federated Workflow (NEW!)
+## ⭐ Federated Workflow
 
-**File**: `plink-gwas-federated.nf` **← RECOMMENDED**
+**File**: `plink-gwas.nf`
 
-The **most flexible** approach - handles **MIXED storage** in ONE workflow:
+The unified workflow handles **MIXED storage** (local + S3) in ONE workflow:
 
 ```groovy
 params.cohorts = [
@@ -47,25 +47,11 @@ params.cohorts = [
 ✅ **Maximum privacy and flexibility**
 ✅ **Real-world multi-institution model**
 
-## Other Workflow Variants
-
-### `plink-gwas-federated.nf`
-Local storage only (all cohorts on their nodes)
-
-### `plink-gwas-s3.nf`
-S3 storage only (all cohorts in one/shared S3)
-
-### `plink-gwas.nf`
-Development/testing (data staged from local machine)
-
 ## Files
 
-- `plink-gwas-federated.nf` - ⭐ **RECOMMENDED** (mixed local + S3)
-- `plink-gwas-federated.nf` - Local storage only
-- `plink-gwas-s3.nf` - S3 storage only
-- `plink-gwas.nf` - Basic (testing)
-- `plink-gwas.config` - Configuration
-- `DATA_SCENARIOS.md` - Detailed guide
+- `plink-gwas.nf` - Main workflow (supports mixed local + S3 storage)
+- `plink-gwas.config` - Configuration with institute settings
+- `DATA_SCENARIOS.md` - Detailed guide on federated analysis
 
 ## Prerequisites
 
@@ -110,7 +96,7 @@ s3://my-genomics-data/plink/
 
 ## Usage
 
-### Option 1: Federated Workflow (Mixed Storage) **← RECOMMENDED**
+### Running the Workflow
 
 **Best for**: Real-world multi-institution studies with mixed storage
 
@@ -149,7 +135,7 @@ export INSTITUTE_D_AWS_KEY="institute_d_access_key"
 export INSTITUTE_D_AWS_SECRET="institute_d_secret_key"
 
 # 3. Run the workflow
-nextflow run plink-gwas-federated.nf -c plink-gwas.config
+nextflow run plink-gwas.nf -c plink-gwas.config
 ```
 
 **What happens**:
@@ -168,33 +154,6 @@ nextflow run plink-gwas-federated.nf -c plink-gwas.config
 - ✅ Maximum flexibility
 - ✅ Privacy audit report
 - ✅ HIPAA/GDPR compliant
-
-### Option 2: Basic Version (Local Files)
-
-```bash
-# Run with default cohorts
-nextflow run plink-gwas.nf -c plink-gwas.config
-
-# Specify custom cohorts
-nextflow run plink-gwas.nf -c plink-gwas.config \
-  --cohorts "study1,study2,study3,study4" \
-  --data_dir "/path/to/plink/data" \
-  --outdir "results"
-```
-
-### Option 3: S3 Version (Cloud-Native Workflows)
-
-```bash
-# Set up AWS credentials (these will be securely passed to Bacalhau jobs)
-export AWS_ACCESS_KEY_ID="your_access_key"
-export AWS_SECRET_ACCESS_KEY="your_secret_key"
-
-# Run the workflow
-nextflow run plink-gwas-s3.nf -c plink-gwas.config \
-  --s3_bucket "s3://my-genomics-data/plink" \
-  --cohorts "cohort1,cohort2,cohort3" \
-  --outdir "results"
-```
 
 ### Using Host Paths (Data Already on Remote Nodes)
 
