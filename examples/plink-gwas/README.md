@@ -105,6 +105,9 @@ s3://my-genomics-data/plink/
 #    Edit the params.cohorts section:
 
 params {
+    // Optional: Specify which node runs the meta-analysis
+    metaAnalysisNode = 'node-coordinator'  // or null for any node
+
     cohorts = [
         // Institute A: Local storage
         [
@@ -154,6 +157,27 @@ nextflow run plink-gwas.nf -c plink-gwas.config
 - ✅ Maximum flexibility
 - ✅ Privacy audit report
 - ✅ HIPAA/GDPR compliant
+
+### Specifying the Meta-Analysis Node
+
+By default, the meta-analysis step runs on any available Bacalhau node. You can specify a particular node to run the meta-analysis:
+
+```groovy
+// In plink-gwas.config
+params {
+    metaAnalysisNode = 'node-coordinator'  // Run meta-analysis here
+    // or
+    metaAnalysisNode = 'node-institute-a'  // Run at Institute A
+    // or
+    metaAnalysisNode = null  // Run on any available node (default)
+}
+```
+
+**Use cases**:
+- **Coordinator node**: Run meta-analysis on a neutral coordination node
+- **Lead institution**: Run at the lead institution's node
+- **Cost optimization**: Run on a node with lower compute costs
+- **Compliance**: Run on a node in a specific jurisdiction
 
 ### Using Host Paths (Data Already on Remote Nodes)
 

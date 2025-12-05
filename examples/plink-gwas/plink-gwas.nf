@@ -160,6 +160,9 @@ process metaAnalysis {
 
     publishDir params.outdir, mode: 'copy'
 
+    // Target specific node if configured
+    label params.metaAnalysisNode ? "bacalhau_node_${params.metaAnalysisNode}" : ""
+
     cpus 4
     memory '8.GB'
     time '1h'
@@ -175,9 +178,11 @@ process metaAnalysis {
     path "cohort_summary.txt", emit: cohort_summary
 
     script:
+    def nodeInfo = params.metaAnalysisNode ? "Node: ${params.metaAnalysisNode}" : "Node: Any available Bacalhau node"
     """
     echo "================================================"
     echo "Meta-Analysis: Combining Multi-Institution Data"
+    echo "${nodeInfo}"
     echo "================================================"
 
     # Create results list
