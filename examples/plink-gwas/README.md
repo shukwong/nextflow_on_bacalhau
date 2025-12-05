@@ -324,7 +324,7 @@ open plink-gwas-report.html
 
 1. **Data Privacy**: Data stays at source, only summary statistics are shared
 2. **Scalability**: Process hundreds of cohorts in parallel
-3. **Cost-Effective**: Pay only for compute time used
+3. **Distributed Costs**: Each institution pays for their own compute and storage
 4. **No Data Movement**: Direct S3/host access eliminates data transfer bottlenecks
 5. **Reproducibility**: Docker containers ensure consistent PLINK versions
 
