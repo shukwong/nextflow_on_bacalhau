@@ -16,6 +16,7 @@ package nextflow.executor
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import nextflow.processor.TaskMonitor
 import nextflow.processor.TaskRun
 import nextflow.util.Duration
 import nextflow.util.MemoryUnit
@@ -445,6 +446,25 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
             log.warn "Failed to get queue status: ${e.message}"
             return [:]
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Monitor factory — FIX #10 / #11
+    // -------------------------------------------------------------------------
+
+    /**
+     * Return a {@link BacalhauTaskMonitor} instead of the grid-executor default.
+     *
+     * {@link AbstractGridExecutor#createTaskMonitor()} creates a
+     * {@link nextflow.processor.TaskPollingMonitor} with a 5-second poll interval
+     * tuned for HPC schedulers.  Bacalhau jobs run for minutes to hours;
+     * polling that frequently generates unnecessary CLI traffic.
+     * {@link BacalhauTaskMonitor} defaults to 30 seconds, configurable via
+     * {@code executor.$bacalhau.pollInterval} in {@code nextflow.config}.
+     */
+    @Override
+    TaskMonitor createTaskMonitor() {
+        return BacalhauTaskMonitor.create(session)
     }
 
     // -------------------------------------------------------------------------

@@ -24,26 +24,21 @@ import nextflow.util.Duration
 /**
  * Polling monitor for Bacalhau jobs.
  *
- * FIX #11: This class was referenced as a core component in CLAUDE.md but was
- * never implemented.  Without it the executor falls back to the inherited
- * {@link TaskPollingMonitor} which is tuned for HPC/grid schedulers and uses
- * fixed polling intervals that are too aggressive for Bacalhau's distributed,
- * potentially long-running jobs.
- *
- * This implementation extends {@link TaskPollingMonitor} to:
- * <ul>
- *   <li>Use a longer default polling interval suited to distributed compute.</li>
- *   <li>Provide a hook point for future Bacalhau-specific status aggregation
- *       (e.g. batch-polling via {@code bacalhau job list} once rather than
- *       per-job {@code bacalhau job describe} calls).</li>
- * </ul>
+ * FIX #11 / #10: {@link AbstractGridExecutor#createTaskMonitor()} defaults to
+ * a 5-second poll interval tuned for HPC schedulers.  Bacalhau jobs typically
+ * run for minutes to hours, so polling every 5 seconds generates unnecessary
+ * API traffic.  This subclass overrides the default to 30 seconds and wires
+ * itself into {@link BacalhauExecutor#createTaskMonitor()}.
  *
  * <h3>Configuration</h3>
- * The polling interval can be tuned in {@code nextflow.config}:
+ * Poll interval and queue size can be tuned in {@code nextflow.config}:
  * <pre>
  * executor {
- *     pollInterval = '30 sec'   // how often to check job status (default: 30s)
- *     queueSize    = 100        // max concurrent Bacalhau jobs (default: 100)
+ *     $bacalhau {
+ *         pollInterval = '30 sec'   // how often to check job status
+ *         queueSize    = 100        // max concurrent Bacalhau jobs
+ *         dumpInterval = '5 min'    // how often to log queue diagnostics
+ *     }
  * }
  * </pre>
  *
@@ -53,65 +48,71 @@ import nextflow.util.Duration
 @CompileStatic
 class BacalhauTaskMonitor extends TaskPollingMonitor {
 
-    /** Default polling interval — longer than HPC defaults because Bacalhau
-     *  jobs typically run for minutes to hours, not seconds. */
+    /** 30 seconds — appropriate for distributed, long-running jobs. */
     static final Duration DEFAULT_POLL_INTERVAL = Duration.of('30sec')
 
     /** Default maximum number of concurrently tracked Bacalhau jobs. */
     static final int DEFAULT_QUEUE_SIZE = 100
 
+    // -------------------------------------------------------------------------
+    // Factory
+    // -------------------------------------------------------------------------
+
     /**
-     * Create a monitor for the given session.
+     * Create a monitor for a Bacalhau executor session.
      *
-     * @param session  The active Nextflow session.
-     * @param name     Executor name (used for config key lookups).
-     * @param defPoll  Default poll interval (overridden by {@code executor.pollInterval}).
-     * @param capacity Default queue capacity (overridden by {@code executor.queueSize}).
-     */
-    static BacalhauTaskMonitor create(Session session, String name, Duration defPoll, int capacity) {
-        assert session
-        assert name
-
-        final pollInterval = session.getPollInterval(name, defPoll)
-        final dumpInterval = session.getMonitorDumpInterval(name)
-        final queueSize    = session.getQueueSize(name, capacity)
-
-        log.debug """\
-            Creating BacalhauTaskMonitor
-              name          : $name
-              pollInterval  : $pollInterval
-              dumpInterval  : $dumpInterval
-              queueSize     : $queueSize
-            """.stripIndent()
-
-        return new BacalhauTaskMonitor(session, name, queueSize, pollInterval, dumpInterval)
-    }
-
-    /**
-     * Convenience factory using Bacalhau defaults.
+     * Actual poll interval, dump interval and queue size are resolved from
+     * {@code nextflow.config}'s {@code executor.$bacalhau} block with the
+     * constants above as fallbacks.
+     *
+     * @param session The active Nextflow session.
      */
     static BacalhauTaskMonitor create(Session session) {
-        return create(session, 'bacalhau', DEFAULT_POLL_INTERVAL, DEFAULT_QUEUE_SIZE)
+        assert session
+
+        final Duration pollInterval = session.getPollInterval('bacalhau', DEFAULT_POLL_INTERVAL)
+        final Duration dumpInterval = session.getMonitorDumpInterval('bacalhau')
+        final int      capacity     = session.getQueueSize('bacalhau', DEFAULT_QUEUE_SIZE)
+
+        log.debug """\
+            BacalhauTaskMonitor settings
+              pollInterval : $pollInterval
+              dumpInterval : $dumpInterval
+              capacity     : $capacity
+            """.stripIndent(true)
+
+        // TaskPollingMonitor's protected constructor accepts a named-param Map.
+        return new BacalhauTaskMonitor([
+            session     : session,
+            name        : 'bacalhau',
+            pollInterval: pollInterval,
+            dumpInterval: dumpInterval,
+            capacity    : capacity,
+        ])
     }
 
-    protected BacalhauTaskMonitor(Session session, String name, int capacity,
-                                   Duration pollInterval, Duration dumpInterval) {
-        super(
-            builder()
-                .session(session)
-                .name(name)
-                .capacity(capacity)
-                .pollInterval(pollInterval)
-                .dumpInterval(dumpInterval)
-        )
+    /**
+     * Delegate to the {@link TaskPollingMonitor} Map-based constructor.
+     *
+     * Keys: {@code session} (required), {@code name} (required),
+     * {@code pollInterval} (required), {@code dumpInterval} (optional),
+     * {@code capacity} (optional).
+     */
+    protected BacalhauTaskMonitor(Map params) {
+        super(params)
     }
+
+    // -------------------------------------------------------------------------
+    // Override hook — future batch-polling optimisation point
+    // -------------------------------------------------------------------------
 
     /**
      * Check whether a handler's job is still active.
      *
-     * Delegates to the handler's own {@code checkIfRunning()} and
-     * {@code checkIfCompleted()} methods, which query Bacalhau via the CLI.
-     * Override this method to implement batch status polling in a future phase.
+     * Currently delegates directly to the handler (one API call per job).
+     * A future optimisation can override this to batch-poll via
+     * {@code bacalhau job list} and cache results within a single poll cycle,
+     * reducing the number of CLI invocations from O(jobs) to O(1).
      */
     @Override
     protected boolean checkTaskStatus(TaskHandler handler) {
