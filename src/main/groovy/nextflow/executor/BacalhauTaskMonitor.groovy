@@ -107,16 +107,20 @@ class BacalhauTaskMonitor extends TaskPollingMonitor {
     // -------------------------------------------------------------------------
 
     /**
-     * Check whether a handler's job is still active.
+     * Check the status of a single Bacalhau job handler.
      *
      * Currently delegates directly to the handler (one API call per job).
      * A future optimisation can override this to batch-poll via
      * {@code bacalhau job list} and cache results within a single poll cycle,
      * reducing the number of CLI invocations from O(jobs) to O(1).
+     *
+     * NOTE: {@link TaskPollingMonitor#checkTaskStatus} is {@code void} — the
+     * method drives state transitions via {@code handler.checkIfRunning()} /
+     * {@code handler.checkIfCompleted()} internally; it does not return a value.
      */
     @Override
-    protected boolean checkTaskStatus(TaskHandler handler) {
+    protected void checkTaskStatus(TaskHandler handler) {
         log.trace "Checking status for task: ${handler.task?.name}"
-        return super.checkTaskStatus(handler)
+        super.checkTaskStatus(handler)
     }
 }
