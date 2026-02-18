@@ -238,7 +238,9 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
         final disk        = task.config.getDisk()
 
         final boolean hasCpu  = cpus && (cpus as int) > 0
-        final boolean hasGpu  = accelerator && accelerator.request > 0
+        // AcceleratorResource.request is a nullable Integer — explicit null-check
+        // prevents NPE from auto-unboxing under @CompileStatic.
+        final boolean hasGpu  = accelerator && accelerator.request != null && accelerator.request > 0
         final boolean hasRes  = hasCpu || memory || hasGpu || disk
 
         if (hasRes) {
@@ -261,7 +263,9 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
         }
 
         // --- Environment variables ---
-        final Map<String, String> env = task.config.getEnvironment()
+        // getEnvironment() is on TaskRun (merges process-level + input env vars),
+        // NOT on TaskConfig — task.config.getEnvironment() would fail at compile time.
+        final Map<String, String> env = task.getEnvironment()
         boolean envHeaderWritten = false
         if (env) {
             sb.append("    Env:\n")
@@ -276,7 +280,9 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
         }
 
         // --- Secrets via env injection ---
-        final Map extConfig = task.config.getExt() as Map
+        // TaskConfig has no getExt() method — ext is a dynamic property stored
+        // in the underlying LazyMap; access it via the typesafe get(String) override.
+        final Map extConfig = (task.config.get('ext') as Map) ?: [:]
         if (extConfig && extConfig.containsKey('bacalhauSecrets')) {
             final secrets = extConfig.get('bacalhauSecrets')
             final List secretList = secrets instanceof List ? secrets as List : [secrets]
