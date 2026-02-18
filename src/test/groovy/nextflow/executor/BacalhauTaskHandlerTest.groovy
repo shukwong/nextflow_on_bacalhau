@@ -15,11 +15,14 @@
 package nextflow.executor
 
 import nextflow.processor.TaskRun
+import nextflow.processor.TaskStatus
 import spock.lang.Specification
 import spock.lang.Subject
 
 import java.nio.file.Files
 import java.nio.file.Path
+
+import static nextflow.executor.AbstractGridExecutor.QueueStatus
 
 /**
  * Unit tests for BacalhauTaskHandler
@@ -35,13 +38,13 @@ class BacalhauTaskHandlerTest extends Specification {
 
     def setup() {
         workDir = Files.createTempDirectory('bacalhau-test')
-        
+
         executor = Mock(BacalhauExecutor)
         task = Mock(TaskRun) {
             getName() >> 'test-task'
             getWorkDir() >> workDir
         }
-        
+
         handler = new BacalhauTaskHandler(task, executor)
     }
 
@@ -115,7 +118,13 @@ job-87654321-dcba-4321-8765-210987654321
         given:
         handler.@bacalhauJobId = 'test-job-123'
         handler.@jobSubmitted = true
+        // checkIfCompleted polls twice (once for DONE, then waits for retrieval thread)
+        // Mock returns DONE so retrieval thread is started; after retrieval completes
+        // the next poll call should also return DONE.
         executor.getQueueStatus() >> ['test-job-123': QueueStatus.DONE]
+        // Pre-set retrievalCompleted so checkIfCompleted doesn't spin-wait
+        handler.@retrievalStarted   = true
+        handler.@retrievalCompleted = true
 
         when:
         def isCompleted = handler.checkIfCompleted()
@@ -136,7 +145,9 @@ job-87654321-dcba-4321-8765-210987654321
 
         then:
         isCompleted == true
-        handler.status == TaskStatus.ERROR
+        // TaskStatus has no ERROR value; a failed task is signalled via task.error
+        // and the status is advanced to COMPLETED (matching GridTaskHandler behaviour).
+        handler.status == TaskStatus.COMPLETED
         task.error instanceof RuntimeException
     }
 

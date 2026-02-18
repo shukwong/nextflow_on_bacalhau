@@ -15,6 +15,7 @@
 package nextflow.executor
 
 import nextflow.Session
+import nextflow.executor.res.AcceleratorResource
 import nextflow.processor.TaskConfig
 import nextflow.processor.TaskRun
 import nextflow.util.MemoryUnit
@@ -23,6 +24,8 @@ import spock.lang.Subject
 import spock.lang.TempDir
 
 import java.nio.file.Path
+
+import static nextflow.executor.AbstractGridExecutor.QueueStatus
 
 /**
  * Unit tests for BacalhauExecutor.
@@ -62,19 +65,19 @@ class BacalhauExecutorTest extends Specification {
     def 'should generate correct submit command using bacalhau job run'() {
         given: 'a task with CPU constraints and two local input files'
         def task = Mock(TaskRun) {
-            getName() >> 'test-task'
-            getContainer() >> 'ubuntu:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'test-task'
+            getContainer()      >> 'ubuntu:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 2
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [
+            getInputFilesMap()  >> [
                 'file1.txt': tempDir.resolve('file1.txt'),
                 'file2.csv': tempDir.resolve('file2.csv')
             ]
@@ -99,19 +102,19 @@ class BacalhauExecutorTest extends Specification {
     def 'should embed correct container image in the YAML spec'() {
         given:
         def task = Mock(TaskRun) {
-            getName() >> 'test-task'
-            getContainer() >> 'alpine:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'test-task'
+            getContainer()      >> 'alpine:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 1
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [:]
+            getInputFilesMap()  >> [:]
         }
         def scriptFile = tempDir.resolve('run.sh')
 
@@ -131,19 +134,19 @@ class BacalhauExecutorTest extends Specification {
             toBytes() >> 4_294_967_296L
         }
         def task = Mock(TaskRun) {
-            getName() >> 'test-task'
-            getContainer() >> 'alpine:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'test-task'
+            getContainer()      >> 'alpine:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 1
                 getMemory()      >> memory
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [:]
+            getInputFilesMap()  >> [:]
         }
         def scriptFile = tempDir.resolve('run.sh')
 
@@ -161,19 +164,19 @@ class BacalhauExecutorTest extends Specification {
         // FIX #9: a single consistent YAML format replaces mixed CLI flags
         given:
         def task = Mock(TaskRun) {
-            getName() >> 'test-task'
-            getContainer() >> 'ubuntu:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'test-task'
+            getContainer()      >> 'ubuntu:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 1
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [
+            getInputFilesMap()  >> [
                 'file1.txt': Path.of('/data/file1.txt'),
                 'file2.csv': Path.of('/data/file2.csv')
             ]
@@ -198,19 +201,19 @@ class BacalhauExecutorTest extends Specification {
     def 'should embed S3 inputs as s3 InputSources in YAML'() {
         given:
         def task = Mock(TaskRun) {
-            getName() >> 'test-task'
-            getContainer() >> 'ubuntu:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'test-task'
+            getContainer()      >> 'ubuntu:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 1
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [
+            getInputFilesMap()  >> [
                 'data.csv': Path.of('s3://my-bucket/path/to/data.csv')
             ]
         }
@@ -350,23 +353,25 @@ class BacalhauExecutorTest extends Specification {
 
     def 'should embed GPU and environment variables in YAML spec'() {
         given:
-        def accelerator = Mock(nextflow.util.AcceleratorResource) {
+        // AcceleratorResource is in nextflow.executor.res, not nextflow.util
+        def accelerator = Mock(AcceleratorResource) {
             getRequest() >> 1
         }
+        // getEnvironment() is on TaskRun, not TaskConfig — mock it on the task
         def task = Mock(TaskRun) {
-            getName() >> 'gpu-task'
-            getContainer() >> 'nvidia/cuda:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'gpu-task'
+            getContainer()      >> 'nvidia/cuda:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> ['MY_ENV': 'my_val']
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 4
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> accelerator
-                getEnvironment() >> ['MY_ENV': 'my_val']
-                getExt()         >> null
+                get('ext')       >> null
             }
-            getInputFilesMap() >> [:]
+            getInputFilesMap()  >> [:]
         }
         def scriptFile = tempDir.resolve('script.sh')
 
@@ -385,20 +390,21 @@ class BacalhauExecutorTest extends Specification {
 
     def 'should embed secrets as env placeholders in YAML spec'() {
         given:
+        // ext is accessed via task.config.get('ext'), not task.config.getExt()
         def task = Mock(TaskRun) {
-            getName() >> 'secret-task'
-            getContainer() >> 'ubuntu:latest'
-            getWorkDir() >> tempDir
-            getConfig() >> Mock(TaskConfig) {
+            getName()           >> 'secret-task'
+            getContainer()      >> 'ubuntu:latest'
+            getWorkDir()        >> tempDir
+            getEnvironment()    >> null
+            getConfig()         >> Mock(TaskConfig) {
                 getCpus()        >> 1
                 getMemory()      >> null
                 getTime()        >> null
                 getDisk()        >> null
                 getAccelerator() >> null
-                getEnvironment() >> null
-                getExt()         >> ['bacalhauSecrets': ['API_KEY', 'DB_PASS']]
+                get('ext')       >> ['bacalhauSecrets': ['API_KEY', 'DB_PASS']]
             }
-            getInputFilesMap() >> [:]
+            getInputFilesMap()  >> [:]
         }
         def scriptFile = tempDir.resolve('script.sh')
 

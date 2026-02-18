@@ -134,13 +134,13 @@ class BacalhauTaskHandler extends GridTaskHandler {
 
         } catch (InterruptedException e) {
             log.error "Task ${task.name} submission interrupted", e
-            status = TaskStatus.ERROR
+            status = TaskStatus.COMPLETED
             Thread.currentThread().interrupt()
             throw new IllegalStateException("Job submission interrupted for task ${task.name}", e)
 
         } catch (Exception e) {
             log.error "Failed to submit task ${task.name} to Bacalhau", e
-            status = TaskStatus.ERROR
+            status = TaskStatus.COMPLETED
             throw e
 
         } finally {
@@ -264,7 +264,7 @@ class BacalhauTaskHandler extends GridTaskHandler {
             } else if (jobStatus == QueueStatus.ERROR) {
                 log.error "Task ${task.name} failed (job ID: ${bacalhauJobId})"
                 synchronized (this) {
-                    status          = TaskStatus.ERROR
+                    status          = TaskStatus.COMPLETED
                     task.exitStatus = readExitFile() ?: 1
                     task.error      = new RuntimeException("Bacalhau job ${bacalhauJobId} failed")
                 }
@@ -274,7 +274,7 @@ class BacalhauTaskHandler extends GridTaskHandler {
         } catch (Exception e) {
             log.error "Error checking completion status for task ${task.name}: ${e.message}", e
             synchronized (this) {
-                status     = TaskStatus.ERROR
+                status     = TaskStatus.COMPLETED
                 task.error = new RuntimeException("Failed to check job status: ${e.message}", e)
             }
             return true
