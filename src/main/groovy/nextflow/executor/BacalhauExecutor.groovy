@@ -61,9 +61,19 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
     // Lifecycle
     // -------------------------------------------------------------------------
 
-    /** Initialize the executor: load config and verify the CLI is reachable. */
-    void initialize() {
-        log.debug "Initializing Bacalhau executor with session: ${session?.runName}"
+    /**
+     * Called by {@link nextflow.executor.Executor#init()} after the session is
+     * available.  Loads config and verifies the CLI is reachable.
+     *
+     * NOTE: Nextflow's executor lifecycle hook is {@code register()}, NOT
+     * {@code initialize()}.  {@code init()} is {@code final} in the base
+     * {@code Executor} class — it creates the task monitor and then calls
+     * {@code register()}.  An {@code initialize()} method is never invoked.
+     */
+    @Override
+    protected void register() {
+        super.register()
+        log.debug "Registering Bacalhau executor with session: ${session?.runName}"
         loadConfiguration()
         if (!isBacalhauAvailable()) {
             throw new IllegalStateException(
@@ -86,11 +96,15 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
      * fall back to process.ext for backward compatibility.
      */
     private void loadConfiguration() {
+        // session.config is a Map — under @CompileStatic, property-style access
+        // (e.g. config.bacalhau) does not compile; must use Map.get(key).
+        final Map cfg = session?.config ?: [:]
+
         // 1. Dedicated bacalhau {} config block (preferred)
-        final Map bacalhauConfig = (session?.config?.bacalhau as Map) ?: [:]
+        final Map bacalhauConfig = (cfg.get('bacalhau') as Map) ?: [:]
         // 2. Legacy process.ext (fallback)
-        final Map processConfig  = (session?.config?.process  as Map) ?: [:]
-        final Map extConfig      = (processConfig?.ext        as Map) ?: [:]
+        final Map processConfig  = (cfg.get('process')  as Map) ?: [:]
+        final Map extConfig      = (processConfig?.get('ext') as Map) ?: [:]
 
         // Merge — bacalhauConfig wins on conflicts
         final Map config = (extConfig + bacalhauConfig) as Map

@@ -22,6 +22,8 @@ import nextflow.trace.TraceRecord
 
 import java.util.concurrent.TimeUnit
 
+import static nextflow.executor.AbstractGridExecutor.QueueStatus
+
 /**
  * Task handler for managing individual Bacalhau job lifecycle.
  *
