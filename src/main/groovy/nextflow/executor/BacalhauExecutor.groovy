@@ -49,7 +49,7 @@ class BacalhauExecutor extends AbstractGridExecutor implements ExtensionPoint {
     static final int DEFAULT_SUBMIT_TIMEOUT = 300
 
     // -------------------------------------------------------------------------
-    // Configuration (loaded once in initialize())
+    // Configuration (loaded once in register())
     // -------------------------------------------------------------------------
     private String bacalhauCliPath
     private String bacalhauNode
