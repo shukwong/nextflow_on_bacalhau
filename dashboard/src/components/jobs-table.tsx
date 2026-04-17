@@ -8,6 +8,7 @@ import {
   durationSeconds,
   formatDuration,
   formatTimeOfDay,
+  toMilliseconds,
 } from '@/lib/utils';
 import { StateBadge } from './state-badge';
 
@@ -147,11 +148,7 @@ export function JobsTable({ jobs, isLoading }: JobsTableProps) {
                     className="px-4 py-3 font-mono text-xs text-slate-400"
                     title={
                       job.CreateTime
-                        ? new Date(
-                            job.CreateTime > 1e12
-                              ? job.CreateTime
-                              : job.CreateTime * 1000,
-                          ).toLocaleString()
+                        ? new Date(toMilliseconds(job.CreateTime)).toLocaleString()
                         : undefined
                     }
                   >
