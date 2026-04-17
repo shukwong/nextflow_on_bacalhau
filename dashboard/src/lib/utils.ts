@@ -18,6 +18,34 @@ export function formatRelativeTime(timestamp?: number): string {
   return new Date(ms).toLocaleString();
 }
 
+export function formatTimeOfDay(timestamp?: number): string {
+  if (!timestamp) return '—';
+  const ms = timestamp > 1e12 ? timestamp : timestamp * 1000;
+  const d = new Date(ms);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  if (sameDay) return `${hh}:${mm}`;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  return `${mon}-${dd} ${hh}:${mm}`;
+}
+
+export function durationSeconds(startedAt?: number, finishedAt?: number): number {
+  if (!startedAt) return 0;
+  const endMs = finishedAt
+    ? finishedAt > 1e12
+      ? finishedAt
+      : finishedAt * 1000
+    : Date.now();
+  const startMs = startedAt > 1e12 ? startedAt : startedAt * 1000;
+  return Math.max(0, Math.round((endMs - startMs) / 1000));
+}
+
 export function formatDuration(startedAt?: number, finishedAt?: number): string {
   if (!startedAt) return '—';
   const endMs = finishedAt
