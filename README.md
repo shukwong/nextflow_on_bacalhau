@@ -11,8 +11,8 @@ This plugin enables Nextflow workflows to execute on Bacalhau's distributed comp
 ### Prerequisites
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: Version 23.10.0 or later
-3. **Java**: JDK 11 or 17 (required for building the plugin)
+2. **Nextflow**: Version 23.10.1 or later
+3. **Java**: JDK 11 (required for building the plugin)
 
 ### Build and Install
 
@@ -40,15 +40,32 @@ plugins {
 
 process {
     executor = 'bacalhau'
-    
-    // Bacalhau-specific configuration
-    ext {
-        bacalhauNode = 'https://api.bacalhau.org'  // Optional: API endpoint
-        waitForCompletion = true                    // Wait for job completion
-        maxRetries = 3                             // Retry failed jobs
-    }
+}
+
+// Dedicated Bacalhau scope (preferred — takes precedence over process.ext)
+bacalhau {
+    bacalhauCliPath   = 'bacalhau'                 // Path to the Bacalhau CLI binary
+    bacalhauNode      = 'https://api.bacalhau.org' // API endpoint
+    waitForCompletion = true                       // Wait for job completion
+    maxRetries        = 3                          // Retry failed jobs (must be >= 0)
+    storageEngine     = 'ipfs'                     // One of: 'ipfs', 's3', 'local'
+    s3Region          = 'us-east-1'                // AWS region for s3:// inputs
 }
 ```
+
+All options above may also be supplied under `process.ext`, but the dedicated
+`bacalhau { }` block wins when both are set.
+
+### Configuration Reference
+
+| Option | Default | Description |
+|---|---|---|
+| `bacalhauCliPath` | `bacalhau` | Path to the Bacalhau CLI binary |
+| `bacalhauNode` | `https://api.bacalhau.org` | Bacalhau API endpoint |
+| `waitForCompletion` | `true` | Wait for job completion |
+| `maxRetries` | `3` | Retry count for failed jobs (non-negative) |
+| `storageEngine` | `ipfs` | Storage backend: `ipfs`, `s3`, or `local` |
+| `s3Region` | `us-east-1` | AWS region used for `s3://` input sources |
 
 ## Usage
 
@@ -92,6 +109,7 @@ process computeTask {
     container 'python:3.9'
     cpus 2
     memory '4.GB'
+    disk '10.GB'  // Optional disk requirement
     time '30m'
     accelerator 1 // Requests 1 GPU
     
@@ -101,6 +119,8 @@ process computeTask {
     """
 }
 ```
+
+Supported resource directives: `cpus`, `memory`, `disk`, `time`, `accelerator`.
 
 ### Data Handling
 
@@ -150,10 +170,12 @@ process {
 ## Features
 
 - **Docker Container Support**: Executes processes in Docker containers
-- **Resource Management**: CPU, memory, and time constraints
-- **Job Monitoring**: Real-time status tracking and logging
+- **Resource Management**: CPU, memory, disk, time, and GPU (`accelerator`) constraints
+- **Job Monitoring**: Cached queue-status polling with failure backoff
 - **Error Handling**: Comprehensive error reporting and retry mechanisms
 - **Distributed Computing**: Leverages Bacalhau's distributed network
+- **Native S3 and `host://` Input Sources**: Fetch directly from S3 or bind-mount node-local paths
+- **Secret Injection**: Forward local environment variables to jobs via `ext.bacalhauSecrets`
 
 ## Development Status
 
