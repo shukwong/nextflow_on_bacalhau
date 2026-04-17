@@ -1,0 +1,82 @@
+site_name: Nextflow on Bacalhau
+site_description: A Nextflow executor plugin for running workflows on Bacalhau's distributed compute network.
+site_url: https://shukwong.github.io/nextflow_on_bacalhau/
+repo_url: https://github.com/shukwong/nextflow_on_bacalhau
+repo_name: shukwong/nextflow_on_bacalhau
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: installation.md
+      - Quickstart: quickstart.md
+      - Configuration: configuration.md
+  - Examples:
+      - Hello World: examples/hello-world.md
+      - Federated Allele Frequency: examples/federated-af.md
+  - Reference:
+      - Architecture: architecture.md
+      - Data Handling: data-handling.md
+  - Development:
+      - Status & Roadmap: status.md
+      - Contributing: contributing.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/shukwong/nextflow_on_bacalhau
