@@ -88,3 +88,95 @@ def test_cancel_terminal_run_returns_409(client: TestClient) -> None:
 
     cancel_resp = client.post(f"/v1/runs/{run_id}/cancel", headers=_AUTH)
     assert cancel_resp.status_code == 409
+
+
+def test_cancel_with_lost_handle_returns_409(settings) -> None:
+    """If the supervisor has no handle for a non-terminal run (e.g. after a
+    coordinator restart), cancel must return 409 rather than silently claim
+    success. The underlying subprocess is gone — there is nothing to kill."""
+
+    import time as _time
+
+    from fastapi.testclient import TestClient
+
+    from site_coordinator.launcher import FakeLauncher, LaunchHandle, LaunchSpec
+    from site_coordinator.main import create_app
+
+    from .conftest import _StubBacalhau
+
+    class _StuckLauncher(FakeLauncher):
+        def launch(self, spec: LaunchSpec) -> LaunchHandle:
+            h = super().launch(spec)
+            # Keep returning None so the watcher never finalises.
+            return h
+
+        def poll(self, handle: LaunchHandle) -> int | None:
+            return None
+
+    app = create_app(
+        settings=settings,
+        launcher=_StuckLauncher(rows=2, leaky=False),
+        bacalhau=_StubBacalhau(alive=True),
+    )
+    with TestClient(app) as c:
+        resp = c.post("/v1/runs", json={"shard_ref": "s1"}, headers=_AUTH)
+        assert resp.status_code == 202, resp.text
+        run_id = resp.json()["run_id"]
+
+        # Wait for the run to be in RUNNING before the handle disappears.
+        deadline = _time.monotonic() + 2.0
+        while _time.monotonic() < deadline:
+            state = c.get(f"/v1/runs/{run_id}").json()["state"]
+            if state == "running":
+                break
+            _time.sleep(0.05)
+
+        # Simulate a lost handle (post-restart scenario) without going through
+        # supervisor.cancel, which would also set state=cancelled.
+        app.state.supervisor._handles.pop(run_id, None)
+
+        cancel_resp = c.post(f"/v1/runs/{run_id}/cancel", headers=_AUTH)
+        assert cancel_resp.status_code == 409, cancel_resp.text
+        detail = cancel_resp.json()["detail"]
+        assert "no live handle" in detail["reason"]
+
+
+def test_startup_resets_stale_runs(settings) -> None:
+    """A coordinator restart must flip non-terminal runs in the snapshot to
+    failed; otherwise the dashboard shows ghost RUNNING runs forever and the
+    cancel endpoint is the only way to clear them."""
+
+    from datetime import datetime, timezone
+
+    from fastapi.testclient import TestClient
+
+    from site_coordinator.launcher import FakeLauncher
+    from site_coordinator.main import create_app
+    from site_coordinator.models import RunState, SiteRun
+    from site_coordinator.store import RunStore
+
+    from .conftest import _StubBacalhau
+
+    snapshot = settings.workdir_root / "state" / "runs.json"
+    pre = RunStore(snapshot_path=snapshot)
+    ghost = SiteRun(
+        run_id="fr-ghost001",
+        site_id=settings.site_id,
+        pipeline_ref="main.nf",
+        shard_ref="s1",
+        state=RunState.RUNNING,
+        started_at=datetime.now(timezone.utc),
+    )
+    pre.put(ghost)
+
+    app = create_app(
+        settings=settings,
+        launcher=FakeLauncher(rows=1, leaky=False),
+        bacalhau=_StubBacalhau(alive=True),
+    )
+    with TestClient(app) as c:
+        resp = c.get(f"/v1/runs/{ghost.run_id}")
+        assert resp.status_code == 200, resp.text
+        payload = resp.json()
+        assert payload["state"] == "failed", payload
+        assert payload["finished_at"]

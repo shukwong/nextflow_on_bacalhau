@@ -48,6 +48,7 @@ async def create_run(body: RunRequest, request: Request) -> RunAcceptance:
         pipeline_root=settings.pipeline_root,
         workdir=workdir,
         nextflow_binary=settings.nextflow_binary,
+        counts_filename=settings.counts_filename,
     )
     await supervisor.start(site_run, spec)
 
@@ -86,7 +87,15 @@ async def cancel_run(run_id: str, request: Request) -> SiteRun:
             detail={"reason": "run is already terminal", "state": run.state.value},
         )
 
-    await supervisor.cancel(run_id)
+    ok = await supervisor.cancel(run_id)
+    if not ok:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "reason": "no live handle for run (coordinator may have restarted)",
+                "state": run.state.value,
+            },
+        )
     updated = store.get(run_id)
     assert updated is not None
     return updated

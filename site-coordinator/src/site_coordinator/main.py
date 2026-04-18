@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import AsyncIterator
 
 from fastapi import FastAPI
@@ -58,6 +59,11 @@ def create_app(
 
         snapshot_path = workdir_root / "state" / "runs.json"
         app.state.store = run_store or RunStore(snapshot_path=snapshot_path)
+        reset = app.state.store.reset_stale_runs(datetime.now(timezone.utc))
+        if reset:
+            logging.getLogger(__name__).warning(
+                "reset %d stale non-terminal run(s) on startup", reset
+            )
 
         app.state.launcher = launcher or NextflowLauncher()
         app.state.supervisor = RunSupervisor(

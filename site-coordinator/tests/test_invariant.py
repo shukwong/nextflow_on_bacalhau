@@ -64,3 +64,20 @@ def test_digest_matches_known_content(tmp_path: Path) -> None:
 def test_expected_schema_is_six_columns() -> None:
     assert EXPECTED_COL_COUNT == 6
     assert EXPECTED_COLUMNS == ("CHROM", "POS", "REF", "ALT", "AC", "AN")
+
+
+def test_invariant_catches_leaky_row_beyond_2000(tmp_path: Path) -> None:
+    """Row-scan must not cap at 2000 rows — a leaky row later must still fail."""
+
+    path = tmp_path / "big_counts.tsv"
+    lines = ["CHROM\tPOS\tREF\tALT\tAC\tAN"]
+    for i in range(2499):
+        lines.append(f"chr1\t{1000 + i}\tA\tG\t1\t120")
+    # Row 2500 has 7 cells — the canary for the row-scan-cap bug.
+    lines.append("chr1\t99999\tA\tG\t1\t120\tHG00099_LEAK")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    result = check_counts_file(path)
+    assert not result.ok, result.model_dump()
+    failed = [c.name for c in result.checks if not c.passed]
+    assert "rows_column_count" in failed

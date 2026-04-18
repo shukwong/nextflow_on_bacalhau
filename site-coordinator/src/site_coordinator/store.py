@@ -69,6 +69,30 @@ class RunStore:
         with self._lock:
             yield from list(self._runs.values())
 
+    def reset_stale_runs(self, now: datetime) -> int:
+        """Mark non-terminal runs as failed on startup.
+
+        Why: when the coordinator restarts, any run still PENDING/RUNNING in
+        the snapshot is orphaned — the supervising task and subprocess are
+        gone, so the watcher can never finalise it. Leaving them running in
+        the store would deadlock the cancel endpoint and mislead the dashboard.
+        """
+        terminal = {RunState.SUCCEEDED, RunState.FAILED, RunState.CANCELLED}
+        reset = 0
+        with self._lock:
+            for rid, run in list(self._runs.items()):
+                if run.state in terminal:
+                    continue
+                patch: dict[str, object] = {
+                    "state": RunState.FAILED,
+                    "finished_at": now,
+                }
+                self._runs[rid] = run.model_copy(update=patch)
+                reset += 1
+            if reset:
+                self._persist()
+        return reset
+
     def __len__(self) -> int:  # noqa: D401 — standard len protocol
         with self._lock:
             return len(self._runs)

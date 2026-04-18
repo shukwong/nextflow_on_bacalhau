@@ -5,7 +5,10 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from .conftest import wait_for_state
+from site_coordinator.launcher import FakeLauncher
+from site_coordinator.main import create_app
+
+from .conftest import _StubBacalhau, wait_for_state
 
 pytestmark = pytest.mark.integration
 
@@ -62,3 +65,30 @@ def test_counts_fetch_is_audit_logged(client: TestClient, settings) -> None:
     assert entry["site_id"] == "test-site"
     assert entry["invariant_ok"] is True
     assert entry["digest"]
+
+
+def test_counts_filename_override_is_respected(settings) -> None:
+    """A non-default counts_filename must flow from Settings to the launcher
+    and back to the served file, so the invariant checks the correct path."""
+
+    overridden = settings.model_copy(update={"counts_filename": "per_site.tsv"})
+    app = create_app(
+        settings=overridden,
+        launcher=FakeLauncher(rows=2, leaky=False),
+        bacalhau=_StubBacalhau(alive=True),
+    )
+    with TestClient(app) as c:
+        resp = c.post("/v1/runs", json={"shard_ref": "s1"}, headers=_AUTH)
+        assert resp.status_code == 202, resp.text
+        run_id = resp.json()["run_id"]
+        wait_for_state(c, run_id, states=("succeeded", "failed"))
+
+        counts_resp = c.get(f"/v1/counts/{run_id}")
+        assert counts_resp.status_code == 200, counts_resp.text
+        header = counts_resp.text.splitlines()[0]
+        assert header.split("\t") == ["CHROM", "POS", "REF", "ALT", "AC", "AN"]
+
+    # Launcher must have written to per_site.tsv, not counts.tsv.
+    run_dir = overridden.workdir_root / "runs" / run_id
+    assert (run_dir / "per_site.tsv").exists()
+    assert not (run_dir / "counts.tsv").exists()

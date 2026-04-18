@@ -26,6 +26,7 @@ class LaunchSpec:
     pipeline_root: Path
     workdir: Path
     nextflow_binary: str
+    counts_filename: str
 
 
 @dataclass
@@ -51,7 +52,7 @@ class NextflowLauncher:
     def launch(self, spec: LaunchSpec) -> LaunchHandle:
         spec.workdir.mkdir(parents=True, exist_ok=True)
         log_path = spec.workdir / "nextflow.log"
-        counts_path = spec.workdir / "counts.tsv"
+        counts_path = spec.workdir / spec.counts_filename
 
         cmd = [
             spec.nextflow_binary,
@@ -136,7 +137,7 @@ class FakeLauncher:
 
     def launch(self, spec: LaunchSpec) -> LaunchHandle:
         spec.workdir.mkdir(parents=True, exist_ok=True)
-        counts_path = spec.workdir / "counts.tsv"
+        counts_path = spec.workdir / spec.counts_filename
         header = "CHROM\tPOS\tREF\tALT\tAC\tAN"
         if self._leaky:
             header += "\tHG00096"

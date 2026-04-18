@@ -101,12 +101,10 @@ def check_counts_file(path: Path) -> InvariantResult:
             )
         )
 
-        # Spot-check row count + first-data-row integrity without loading the
-        # whole file. If any early row violates the column count, refuse.
+        # Scan every data row. MAX_FILE_BYTES already bounds the cost; capping
+        # the row count would let a leaky row past the checker on a long file.
         bad_row: int | None = None
         for idx, line in enumerate(fh, start=2):
-            if idx > 2_000:  # bound the check; full validation is pipeline's job
-                break
             if not line.strip():
                 continue
             cells = line.rstrip("\n").split("\t")
