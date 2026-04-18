@@ -69,6 +69,47 @@ def test_unknown_run_id_returns_404(client: TestClient) -> None:
     assert resp.status_code == 404
 
 
+def test_list_runs_returns_envelope_sorted_most_recent_first(client: TestClient) -> None:
+    import time as _time
+
+    ids: list[str] = []
+    for _ in range(3):
+        resp = client.post("/v1/runs", json={"shard_ref": "s1"}, headers=_AUTH)
+        assert resp.status_code == 202
+        ids.append(resp.json()["run_id"])
+        _time.sleep(0.01)  # ensure strictly increasing started_at
+
+    for rid in ids:
+        wait_for_state(client, rid, states=("succeeded", "failed"))
+
+    resp = client.get("/v1/runs")
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["total"] == 3
+    returned = [r["run_id"] for r in payload["runs"]]
+    assert returned == list(reversed(ids)), returned  # newest first
+
+
+def test_list_runs_respects_state_filter_and_limit(client: TestClient) -> None:
+    for _ in range(3):
+        resp = client.post("/v1/runs", json={"shard_ref": "s1"}, headers=_AUTH)
+        rid = resp.json()["run_id"]
+        wait_for_state(client, rid, states=("succeeded", "failed"))
+
+    succeeded = client.get("/v1/runs", params={"state": "succeeded"}).json()
+    assert succeeded["total"] == 3
+    assert all(r["state"] == "succeeded" for r in succeeded["runs"])
+
+    limited = client.get("/v1/runs", params={"limit": 2}).json()
+    assert len(limited["runs"]) == 2
+    assert limited["total"] == 3
+
+
+def test_list_runs_rejects_out_of_range_limit(client: TestClient) -> None:
+    assert client.get("/v1/runs", params={"limit": 0}).status_code == 422
+    assert client.get("/v1/runs", params={"limit": 10_000}).status_code == 422
+
+
 def test_leaky_run_marks_state_failed(leaky_client: TestClient) -> None:
     resp = leaky_client.post("/v1/runs", json={"shard_ref": "s1"}, headers=_AUTH)
     assert resp.status_code == 202

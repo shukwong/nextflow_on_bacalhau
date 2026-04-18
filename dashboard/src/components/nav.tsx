@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Network, Table2 } from 'lucide-react';
+import { Network, Settings, Table2 } from 'lucide-react';
 
 export function Nav() {
   return (
@@ -14,7 +14,7 @@ export function Nav() {
         </Link>
         <div className="flex items-center gap-4 text-xs text-slate-400">
           <Link className="hover:text-slate-100" href="/">
-            Jobs
+            Runs
           </Link>
           <Link
             className="inline-flex items-center gap-1 hover:text-slate-100"
@@ -22,6 +22,13 @@ export function Nav() {
           >
             <Table2 className="h-3 w-3" />
             Pooled AF
+          </Link>
+          <Link
+            className="inline-flex items-center gap-1 hover:text-slate-100"
+            href="/settings"
+          >
+            <Settings className="h-3 w-3" />
+            Sites
           </Link>
         </div>
       </div>

@@ -94,6 +94,17 @@ class RunAcceptance(BaseModel):
     started_at: datetime = Field(default_factory=_utcnow)
 
 
+class RunList(BaseModel):
+    """Envelope for GET /v1/runs — a list of SiteRun records.
+
+    Envelope rather than a bare array so we can add pagination cursors
+    later without breaking the wire format.
+    """
+
+    runs: tuple[SiteRun, ...]
+    total: int
+
+
 class Health(BaseModel):
     ok: bool
     version: str

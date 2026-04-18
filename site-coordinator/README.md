@@ -6,6 +6,8 @@ invariant on outputs, and serves `counts.tsv` to authorised aggregators — so
 the dashboard can show "three sites green" without ever touching raw genotypes.
 
 Part of M3 in [`design/federation-dashboard.md`](../design/federation-dashboard.md).
+For the stitched end-to-end workflow (coordinator + dashboard), see
+[`docs/federation-dashboard.md`](../docs/federation-dashboard.md).
 
 ## What it does
 
@@ -86,6 +88,25 @@ pytest
 
 Tests use an injected `FakeLauncher` that writes a deterministic counts file
 — no Nextflow, no Bacalhau, fully offline.
+
+## Connecting from the dashboard
+
+The federation dashboard talks to this API directly from the browser (there
+is no server-side proxy), so CORS must allow the dashboard's origin.
+
+- Default: `http://localhost:3000` is allowed out of the box.
+- For any other dashboard origin, update `allowed_origins` in
+  `src/site_coordinator/main.py` or wrap the coordinator in a reverse proxy
+  that injects the correct `Access-Control-Allow-Origin` header.
+
+On the dashboard side, open **Sites → Add site** and paste:
+
+- this coordinator's public URL (e.g. `https://coord.site-a.example`)
+- the `COORDINATOR_OPERATOR_TOKEN` value you configured
+
+A green health pill within ~10 seconds confirms the wiring. See
+[`docs/federation-dashboard.md`](../docs/federation-dashboard.md) for the
+full end-to-end walkthrough.
 
 ## Privacy model
 
