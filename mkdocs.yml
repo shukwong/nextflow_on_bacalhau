@@ -72,6 +72,7 @@ nav:
   - Reference:
       - Architecture: architecture.md
       - Data Handling: data-handling.md
+      - Federation Dashboard: federation-dashboard.md
   - Development:
       - Status & Roadmap: status.md
       - Contributing: contributing.md

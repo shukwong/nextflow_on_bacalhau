@@ -1,16 +1,19 @@
-"""POST /v1/runs, GET /v1/runs/{run_id}, POST /v1/runs/{run_id}/cancel."""
+"""POST /v1/runs, GET /v1/runs, GET /v1/runs/{run_id}, POST /v1/runs/{run_id}/cancel."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from ..auth import require_operator
 from ..launcher import LaunchSpec
-from ..models import RunAcceptance, RunRequest, RunState, SiteRun
+from ..models import RunAcceptance, RunList, RunRequest, RunState, SiteRun
 
 router = APIRouter(tags=["runs"])
+
+_LIST_DEFAULT_LIMIT = 50
+_LIST_MAX_LIMIT = 500
 
 
 @router.post(
@@ -58,6 +61,25 @@ async def create_run(body: RunRequest, request: Request) -> RunAcceptance:
         site_id=settings.site_id,
         started_at=now,
     )
+
+
+@router.get("/runs", response_model=RunList)
+async def list_runs(
+    request: Request,
+    limit: int = Query(
+        default=_LIST_DEFAULT_LIMIT,
+        ge=1,
+        le=_LIST_MAX_LIMIT,
+        description="Max runs to return (most-recent-first).",
+    ),
+    state: RunState | None = Query(
+        default=None, description="Filter by terminal/non-terminal state."
+    ),
+) -> RunList:
+    store = request.app.state.store
+    all_runs = sorted(store.all(), key=lambda r: r.started_at, reverse=True)
+    filtered = [r for r in all_runs if state is None or r.state == state]
+    return RunList(runs=tuple(filtered[:limit]), total=len(filtered))
 
 
 @router.get("/runs/{run_id}", response_model=SiteRun)
