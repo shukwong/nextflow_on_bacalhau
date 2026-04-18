@@ -14,7 +14,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEMO_DIR="${PROJECT_ROOT}/examples/federated-af"
-PLUGIN_VERSION="0.1.0-SNAPSHOT"
+PLUGIN_VERSION="0.1.0"
 PLUGIN_ID="nf-bacalhau"
 PLUGIN_DIR="$HOME/.nextflow/plugins/${PLUGIN_ID}-${PLUGIN_VERSION}"
 PLUGIN_JAR="${PROJECT_ROOT}/build/libs/${PLUGIN_ID}-${PLUGIN_VERSION}.jar"
@@ -51,7 +51,7 @@ command -v docker   >/dev/null || fail "docker CLI not found"
 command -v bacalhau >/dev/null || fail "bacalhau CLI not found"
 command -v python3  >/dev/null || fail "python3 not found"
 command -v "$NEXTFLOW_BIN" >/dev/null || \
-  fail "Nextflow 23.10.x binary '$NEXTFLOW_BIN' not found. Set NEXTFLOW_BIN."
+  fail "Nextflow binary '$NEXTFLOW_BIN' not found. Set NEXTFLOW_BIN (requires Nextflow >=24.10.0)."
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running"
 
 # Autodetect Java 17 for Nextflow.
