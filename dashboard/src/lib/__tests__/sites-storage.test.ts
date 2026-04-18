@@ -89,4 +89,56 @@ describe('loadSites / saveSites', () => {
     );
     expect(loadSites()).toEqual(EMPTY_STORE);
   });
+
+  it('rejects coordinatorUrl with non-http(s) scheme (ftp)', () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        version: 1,
+        sites: [
+          {
+            id: 'site-1',
+            label: 'Bad',
+            coordinatorUrl: 'ftp://host.example/',
+          },
+        ],
+        activeSiteId: 'site-1',
+      }),
+    );
+    expect(loadSites()).toEqual(EMPTY_STORE);
+  });
+
+  it('rejects coordinatorUrl with non-http(s) scheme (mailto)', () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        version: 1,
+        sites: [
+          {
+            id: 'site-1',
+            label: 'Bad',
+            coordinatorUrl: 'mailto:op@example.com',
+          },
+        ],
+        activeSiteId: 'site-1',
+      }),
+    );
+    expect(loadSites()).toEqual(EMPTY_STORE);
+  });
+
+  it('accepts coordinatorUrl with https scheme', () => {
+    const store: SiteStore = {
+      version: 1,
+      sites: [
+        {
+          id: 'site-1',
+          label: 'OK',
+          coordinatorUrl: 'https://host.example',
+        },
+      ],
+      activeSiteId: 'site-1',
+    };
+    saveSites(store);
+    expect(loadSites()).toEqual(store);
+  });
 });

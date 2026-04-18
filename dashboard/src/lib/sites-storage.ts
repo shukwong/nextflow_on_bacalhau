@@ -11,10 +11,25 @@ import { z } from 'zod';
 
 const STORAGE_KEY = 'federation-sites-v1';
 
+const httpUrlSchema = z
+  .string()
+  .url()
+  .refine(
+    (v) => {
+      try {
+        const proto = new URL(v).protocol;
+        return proto === 'http:' || proto === 'https:';
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Coordinator URL must use http:// or https://' },
+  );
+
 const siteConfigSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  coordinatorUrl: z.string().url(),
+  coordinatorUrl: httpUrlSchema,
   operatorToken: z.string().optional(),
 });
 

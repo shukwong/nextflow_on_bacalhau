@@ -72,7 +72,11 @@ export default function SettingsPage() {
       return;
     }
     try {
-      new URL(draft.coordinatorUrl);
+      const proto = new URL(draft.coordinatorUrl).protocol;
+      if (proto !== 'http:' && proto !== 'https:') {
+        setError('Coordinator URL must use http:// or https://.');
+        return;
+      }
     } catch {
       setError('Coordinator URL must be a valid http(s) URL.');
       return;
