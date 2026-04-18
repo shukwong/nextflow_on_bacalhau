@@ -1,0 +1,22 @@
+services:
+  coordinator:
+    build: .
+    image: nf-bacalhau/site-coordinator:dev
+    container_name: site-coordinator
+    ports:
+      - "8080:8080"
+    environment:
+      COORDINATOR_SITE_ID: ${COORDINATOR_SITE_ID:-local}
+      COORDINATOR_BACALHAU_API_URL: ${COORDINATOR_BACALHAU_API_URL:-http://host.docker.internal:1234}
+      COORDINATOR_OPERATOR_TOKEN: ${COORDINATOR_OPERATOR_TOKEN:?must set operator token}
+      COORDINATOR_PIPELINE_ROOT: /app/pipeline
+      COORDINATOR_WORKDIR_ROOT: /var/lib/site-coordinator
+    volumes:
+      - ../examples/federated-af:/app/pipeline:ro
+      - coordinator-data:/var/lib/site-coordinator
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  coordinator-data:

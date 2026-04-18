@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "site-coordinator"
+version = "0.1.0"
+description = "Per-site coordinator for the nf-bacalhau federated-AF pipeline."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Wendy Wong" }]
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "pydantic>=2.8,<3.0",
+  "pydantic-settings>=2.4,<3.0",
+  "httpx>=0.27,<1.0",
+  "uvicorn[standard]>=0.30,<1.0",
+  "anyio>=4.4,<5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-asyncio>=0.24,<1.0",
+  "ruff>=0.6,<1.0",
+  "mypy>=1.11,<2.0",
+]
+
+[project.scripts]
+site-coordinator = "site_coordinator.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/site_coordinator"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RET", "PIE"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+asyncio_mode = "auto"
+markers = [
+  "unit: pure unit tests (no IO)",
+  "integration: FastAPI + subprocess integration tests",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+packages = ["site_coordinator"]
+mypy_path = "src"
