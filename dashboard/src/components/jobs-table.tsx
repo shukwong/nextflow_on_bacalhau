@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import type { BacalhauJobSummary } from '@/lib/types';
 import {
@@ -135,8 +136,13 @@ export function JobsTable({ jobs, isLoading }: JobsTableProps) {
             <tbody className="divide-y divide-white/5">
               {visible.map((job) => (
                 <tr key={job.ID} className="hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-300">
-                    {job.ID.slice(0, 12)}
+                  <td className="px-4 py-3 font-mono text-xs">
+                    <Link
+                      href={`/jobs/${job.ID}`}
+                      className="text-accent hover:underline"
+                    >
+                      {job.ID.slice(0, 12)}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-200">
                     {job.Name ?? <span className="text-slate-500">—</span>}
