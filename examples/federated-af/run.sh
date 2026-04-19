@@ -14,7 +14,7 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DEMO_DIR="${PROJECT_ROOT}/examples/federated-af"
-PLUGIN_VERSION="0.1.0-SNAPSHOT"
+PLUGIN_VERSION="0.1.0"
 PLUGIN_ID="nf-bacalhau"
 PLUGIN_DIR="$HOME/.nextflow/plugins/${PLUGIN_ID}-${PLUGIN_VERSION}"
 PLUGIN_JAR="${PROJECT_ROOT}/build/libs/${PLUGIN_ID}-${PLUGIN_VERSION}.jar"
@@ -26,7 +26,9 @@ BACALHAU_API_PORT="${BACALHAU_API_PORT:-1234}"
 BACALHAU_LOG="${RUN_DIR}/bacalhau-server.log"
 BACALHAU_PID_FILE="${RUN_DIR}/bacalhau-server.pid"
 
-NEXTFLOW_BIN="${NEXTFLOW_BIN:-nextflow23}"
+NEXTFLOW_BIN="${NEXTFLOW_BIN:-nextflow}"
+NEXTFLOW_MIN_MAJOR=24
+NEXTFLOW_MIN_MINOR=10
 
 SKIP_BUILD=false
 SKIP_BACALHAU=false
@@ -51,7 +53,19 @@ command -v docker   >/dev/null || fail "docker CLI not found"
 command -v bacalhau >/dev/null || fail "bacalhau CLI not found"
 command -v python3  >/dev/null || fail "python3 not found"
 command -v "$NEXTFLOW_BIN" >/dev/null || \
-  fail "Nextflow 23.10.x binary '$NEXTFLOW_BIN' not found. Set NEXTFLOW_BIN."
+  fail "Nextflow binary '$NEXTFLOW_BIN' not found. Set NEXTFLOW_BIN (requires Nextflow >=24.10.0)."
+
+# The plugin manifest requires Nextflow >=24.10.0. Parse `nextflow -v` and
+# fail fast so users don't pass command -v and then hit a plugin-load error.
+nf_version_raw="$("$NEXTFLOW_BIN" -v 2>&1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1 || true)"
+[[ -n "$nf_version_raw" ]] || fail "Could not parse Nextflow version from '$NEXTFLOW_BIN -v'."
+nf_major="${nf_version_raw%%.*}"
+nf_minor="$(printf '%s' "$nf_version_raw" | cut -d. -f2)"
+# Use 10# to force base-10 so a leading zero (e.g. 24.09.x) isn't read as octal.
+if (( 10#$nf_major < NEXTFLOW_MIN_MAJOR )) || { (( 10#$nf_major == NEXTFLOW_MIN_MAJOR )) && (( 10#$nf_minor < NEXTFLOW_MIN_MINOR )); }; then
+  fail "Nextflow >=${NEXTFLOW_MIN_MAJOR}.${NEXTFLOW_MIN_MINOR}.0 required (plugin manifest), found $nf_version_raw at '$NEXTFLOW_BIN'."
+fi
+
 docker info >/dev/null 2>&1 || fail "Docker daemon is not running"
 
 # Autodetect Java 17 for Nextflow.

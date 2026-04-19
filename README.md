@@ -11,10 +11,24 @@ This plugin enables Nextflow workflows to execute on Bacalhau's distributed comp
 ### Prerequisites
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: Version 23.10.1 or later
-3. **Java**: JDK 11 (required for building the plugin)
+2. **Nextflow**: Version 24.10.0 or later
+3. **Java**: JDK 21 (required only when building the plugin from source)
 
-### Build and Install
+### Option A — Install from the Nextflow Plugin Registry
+
+Once published to the [Nextflow Plugin Registry](https://registry.nextflow.io), the
+plugin can be installed by Nextflow directly — no local build required:
+
+```groovy
+// nextflow.config
+plugins {
+    id 'nf-bacalhau@0.1.0'
+}
+```
+
+Nextflow will download and cache the plugin on first run.
+
+### Option B — Build and Install Locally
 
 ```bash
 # Clone the repository
@@ -22,10 +36,10 @@ git clone https://github.com/nextflow-io/nextflow-bacalhau-executor
 cd nextflow-bacalhau-executor
 
 # Build the plugin
-./gradlew build
+make assemble       # or: ./gradlew assemble
 
-# Publish to local Maven repository
-./gradlew publishToMavenLocal
+# Install into ~/.nextflow/plugins
+make install        # or: ./gradlew install
 ```
 
 ## Configuration
@@ -35,7 +49,7 @@ Configure your Nextflow workflow to use the Bacalhau executor:
 ```groovy
 // nextflow.config
 plugins {
-    id 'nf-bacalhau@0.1.0-SNAPSHOT'
+    id 'nf-bacalhau@0.1.0'
 }
 
 process {
@@ -196,7 +210,8 @@ process {
 - ✅ JSON-based queue status parsing
 - ✅ Input validation and security hardening
 
-**Upcoming (Phase 4):**
+**Phase 4 (in progress):**
+- ✅ Nextflow Plugin Registry packaging (`io.nextflow.nextflow-plugin` Gradle plugin)
 - 🚧 Performance tuning and optimization
 - 🚧 Extensive integration testing with live Bacalhau cluster
 - 🚧 Advanced networking configuration
@@ -207,20 +222,34 @@ process {
 ### Building
 
 ```bash
-./gradlew build
+make assemble         # or: ./gradlew assemble
 ```
 
 ### Testing
 
 ```bash
-./gradlew test
+make test             # or: ./gradlew test
 ```
 
 ### Integration Testing
 
 ```bash
-./gradlew integrationTest
+make integration-test # or: ./gradlew integrationTest
 ```
+
+### Publishing to the Nextflow Plugin Registry
+
+1. Claim the plugin at <https://registry.nextflow.io/claim-plugin> using the
+   `provider` declared in `build.gradle` (currently `nf-bacalhau`).
+2. Add your registry access token to `$HOME/.gradle/gradle.properties`:
+   ```
+   npr.apiKey=<your-token>
+   ```
+   Alternatively, export `NPR_API_KEY` in the environment.
+3. Release:
+   ```bash
+   make release       # or: ./gradlew releasePlugin
+   ```
 
 ## Contributing
 
