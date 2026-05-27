@@ -20,6 +20,7 @@ export default function RunDetailPage() {
 
   const runQuery = useSiteRun(site, runId);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const cancelMutation = useMutation({
     mutationFn: () => cancelRun(site!, runId!),
@@ -59,7 +60,9 @@ export default function RunDetailPage() {
   const canDownloadCounts = run.state === 'succeeded';
 
   const handleDownloadCounts = async () => {
+    if (isDownloading) return;
     setDownloadError(null);
+    setIsDownloading(true);
     try {
       const blob = await fetchCounts(site, run.run_id);
       const url = URL.createObjectURL(blob);
@@ -72,6 +75,8 @@ export default function RunDetailPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       setDownloadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -100,10 +105,11 @@ export default function RunDetailPage() {
             <button
               type="button"
               onClick={handleDownloadCounts}
-              className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1.5 text-xs text-accent ring-1 ring-inset ring-accent/30 hover:bg-accent/25"
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1.5 text-xs text-accent ring-1 ring-inset ring-accent/30 hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-3 w-3" />
-              counts.tsv
+              {isDownloading ? 'Downloading…' : 'counts.tsv'}
             </button>
           )}
           {!terminal && (
