@@ -28,12 +28,13 @@ All routes live under `/v1`.
 |---|---|---|---|
 | `GET` | `/healthz` | none | Liveness + Bacalhau reachability |
 | `POST` | `/runs` | `Bearer` | Launch a run. Body: `{shard_ref, pipeline_ref?, config_ref?}` |
-| `GET` | `/runs/{run_id}` | none | Run status + task snapshots + invariant |
+| `GET` | `/runs` | `Bearer` | List recent runs |
+| `GET` | `/runs/{run_id}` | `Bearer` | Run status + task snapshots + invariant |
 | `POST` | `/runs/{run_id}/cancel` | `Bearer` | Cancel an in-flight run |
-| `GET` | `/counts/{run_id}` | none* | Stream `counts.tsv` iff invariant passed |
+| `GET` | `/counts/{run_id}` | `Bearer` | Stream `counts.tsv` iff invariant passed |
 
-`*` Counts is read-only by design; in production this route is protected by
-the aggregator token (M4+).
+The demo uses the operator token for both reads and writes. A production
+deployment should split read/aggregation and operator privileges.
 
 The full spec lives at `GET /openapi.json` once the service is running.
 
@@ -76,9 +77,10 @@ All settings are env-var driven with the `COORDINATOR_` prefix. See
 | `COORDINATOR_PIPELINE_ROOT` | cwd | Dir containing `main.nf` |
 | `COORDINATOR_WORKDIR_ROOT` | `/tmp/site-coordinator-runs` | Per-run workdirs + state snapshot |
 | `COORDINATOR_COUNTS_FILENAME` | `counts.tsv` | Published artefact name |
-| `COORDINATOR_OPERATOR_TOKEN` | _(unset)_ | Required for `POST /runs` and cancel |
+| `COORDINATOR_OPERATOR_TOKEN` | _(unset)_ | Required for all `/runs` and `/counts` routes |
 
-If `OPERATOR_TOKEN` is unset, every write returns `403` (fail-closed).
+If `OPERATOR_TOKEN` is unset, every `/runs` and `/counts` request returns
+`403` (fail-closed). `/healthz` remains unauthenticated.
 
 ## Test
 

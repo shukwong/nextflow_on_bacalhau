@@ -1,4 +1,4 @@
-"""Bearer-token gate for operator-only endpoints (POST /runs, cancel)."""
+"""Bearer-token gate for coordinator API endpoints other than health checks."""
 
 from __future__ import annotations
 

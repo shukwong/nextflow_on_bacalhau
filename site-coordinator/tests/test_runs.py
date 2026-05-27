@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -36,6 +38,11 @@ def test_post_run_with_wrong_token_is_denied(client: TestClient) -> None:
     assert resp.status_code == 401
 
 
+def test_run_reads_without_token_are_denied(client: TestClient) -> None:
+    assert client.get("/v1/runs").status_code == 401
+    assert client.get("/v1/runs/fr-nope").status_code == 401
+
+
 def test_post_run_rejects_unknown_fields(client: TestClient) -> None:
     resp = client.post(
         "/v1/runs",
@@ -65,7 +72,7 @@ def test_happy_path_run_reaches_succeeded(client: TestClient) -> None:
 
 
 def test_unknown_run_id_returns_404(client: TestClient) -> None:
-    resp = client.get("/v1/runs/fr-nope")
+    resp = client.get("/v1/runs/fr-nope", headers=_AUTH)
     assert resp.status_code == 404
 
 
@@ -82,7 +89,7 @@ def test_list_runs_returns_envelope_sorted_most_recent_first(client: TestClient)
     for rid in ids:
         wait_for_state(client, rid, states=("succeeded", "failed"))
 
-    resp = client.get("/v1/runs")
+    resp = client.get("/v1/runs", headers=_AUTH)
     assert resp.status_code == 200
     payload = resp.json()
     assert payload["total"] == 3
@@ -96,18 +103,18 @@ def test_list_runs_respects_state_filter_and_limit(client: TestClient) -> None:
         rid = resp.json()["run_id"]
         wait_for_state(client, rid, states=("succeeded", "failed"))
 
-    succeeded = client.get("/v1/runs", params={"state": "succeeded"}).json()
+    succeeded = client.get("/v1/runs", params={"state": "succeeded"}, headers=_AUTH).json()
     assert succeeded["total"] == 3
     assert all(r["state"] == "succeeded" for r in succeeded["runs"])
 
-    limited = client.get("/v1/runs", params={"limit": 2}).json()
+    limited = client.get("/v1/runs", params={"limit": 2}, headers=_AUTH).json()
     assert len(limited["runs"]) == 2
     assert limited["total"] == 3
 
 
 def test_list_runs_rejects_out_of_range_limit(client: TestClient) -> None:
-    assert client.get("/v1/runs", params={"limit": 0}).status_code == 422
-    assert client.get("/v1/runs", params={"limit": 10_000}).status_code == 422
+    assert client.get("/v1/runs", params={"limit": 0}, headers=_AUTH).status_code == 422
+    assert client.get("/v1/runs", params={"limit": 10_000}, headers=_AUTH).status_code == 422
 
 
 def test_leaky_run_marks_state_failed(leaky_client: TestClient) -> None:
@@ -147,9 +154,8 @@ def test_cancel_with_lost_handle_returns_409(settings) -> None:
 
     class _StuckLauncher(FakeLauncher):
         def launch(self, spec: LaunchSpec) -> LaunchHandle:
-            h = super().launch(spec)
             # Keep returning None so the watcher never finalises.
-            return h
+            return super().launch(spec)
 
         def poll(self, handle: LaunchHandle) -> int | None:
             return None
@@ -167,7 +173,7 @@ def test_cancel_with_lost_handle_returns_409(settings) -> None:
         # Wait for the run to be in RUNNING before the handle disappears.
         deadline = _time.monotonic() + 2.0
         while _time.monotonic() < deadline:
-            state = c.get(f"/v1/runs/{run_id}").json()["state"]
+            state = c.get(f"/v1/runs/{run_id}", headers=_AUTH).json()["state"]
             if state == "running":
                 break
             _time.sleep(0.05)
@@ -187,7 +193,7 @@ def test_startup_resets_stale_runs(settings) -> None:
     failed; otherwise the dashboard shows ghost RUNNING runs forever and the
     cancel endpoint is the only way to clear them."""
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from fastapi.testclient import TestClient
 
@@ -206,7 +212,7 @@ def test_startup_resets_stale_runs(settings) -> None:
         pipeline_ref="main.nf",
         shard_ref="s1",
         state=RunState.RUNNING,
-        started_at=datetime.now(timezone.utc),
+        started_at=datetime.now(UTC),
     )
     pre.put(ghost)
 
@@ -216,7 +222,7 @@ def test_startup_resets_stale_runs(settings) -> None:
         bacalhau=_StubBacalhau(alive=True),
     )
     with TestClient(app) as c:
-        resp = c.get(f"/v1/runs/{ghost.run_id}")
+        resp = c.get(f"/v1/runs/{ghost.run_id}", headers=_AUTH)
         assert resp.status_code == 200, resp.text
         payload = resp.json()
         assert payload["state"] == "failed", payload

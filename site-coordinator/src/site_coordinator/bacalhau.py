@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -42,4 +42,5 @@ class BacalhauClient:
             if resp.status_code == 404:
                 return None
             resp.raise_for_status()
-            return resp.json().get("Job")
+            job = resp.json().get("Job")
+            return cast(dict[str, Any] | None, job)

@@ -20,7 +20,7 @@ def test_counts_served_after_success(client: TestClient) -> None:
     run_id = resp.json()["run_id"]
     wait_for_state(client, run_id, states=("succeeded",))
 
-    counts_resp = client.get(f"/v1/counts/{run_id}")
+    counts_resp = client.get(f"/v1/counts/{run_id}", headers=_AUTH)
     assert counts_resp.status_code == 200, counts_resp.text
     assert counts_resp.headers["content-type"].startswith("text/tab-separated-values")
     assert counts_resp.headers.get("x-counts-digest")
@@ -35,15 +35,20 @@ def test_counts_blocked_when_invariant_fails(leaky_client: TestClient) -> None:
     run_id = resp.json()["run_id"]
     wait_for_state(leaky_client, run_id, states=("failed",))
 
-    counts_resp = leaky_client.get(f"/v1/counts/{run_id}")
+    counts_resp = leaky_client.get(f"/v1/counts/{run_id}", headers=_AUTH)
     assert counts_resp.status_code == 409
     detail = counts_resp.json()["detail"]
     assert detail["reason"] in {"run is not in succeeded state", "privacy invariant failed"}
 
 
 def test_counts_404_for_unknown_run(client: TestClient) -> None:
-    resp = client.get("/v1/counts/fr-nope")
+    resp = client.get("/v1/counts/fr-nope", headers=_AUTH)
     assert resp.status_code == 404
+
+
+def test_counts_without_token_is_denied(client: TestClient) -> None:
+    resp = client.get("/v1/counts/fr-nope")
+    assert resp.status_code == 401
 
 
 def test_counts_fetch_is_audit_logged(client: TestClient, settings) -> None:
@@ -51,7 +56,7 @@ def test_counts_fetch_is_audit_logged(client: TestClient, settings) -> None:
     run_id = resp.json()["run_id"]
     wait_for_state(client, run_id, states=("succeeded",))
 
-    assert client.get(f"/v1/counts/{run_id}").status_code == 200
+    assert client.get(f"/v1/counts/{run_id}", headers=_AUTH).status_code == 200
 
     audit_path = settings.workdir_root / "audit" / "counts.jsonl"
     assert audit_path.exists()
@@ -83,7 +88,7 @@ def test_counts_filename_override_is_respected(settings) -> None:
         run_id = resp.json()["run_id"]
         wait_for_state(c, run_id, states=("succeeded", "failed"))
 
-        counts_resp = c.get(f"/v1/counts/{run_id}")
+        counts_resp = c.get(f"/v1/counts/{run_id}", headers=_AUTH)
         assert counts_resp.status_code == 200, counts_resp.text
         header = counts_resp.text.splitlines()[0]
         assert header.split("\t") == ["CHROM", "POS", "REF", "ALT", "AC", "AN"]
