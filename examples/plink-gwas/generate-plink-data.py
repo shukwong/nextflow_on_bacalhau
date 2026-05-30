@@ -7,11 +7,14 @@ For each cohort this writes three plain-text files (no PLINK install needed):
   <cohort>.map  - CHR  SNP  cM  BP           one line per SNP
   <cohort>.cov  - FID IID C1 C2              numeric covariates (header row)
 
-The data is random but deterministic (seeded), with polymorphic SNPs and a
-balanced case/control phenotype, so `plink --logistic` produces non-degenerate
-results on every cohort. It is NOT biologically meaningful — it only exercises
-the pipeline end to end, the same way examples/federated-af/generate-shards.py
-produces synthetic VCFs.
+All cohorts SHARE the same variant definition (SNP IDs, chromosome, and
+positions) so that PLINK's meta-analysis — which keys on SNP ID — combines
+like-for-like variants. Only the genotypes, phenotypes, and covariates vary
+per cohort. The data is random but deterministic (seeded), with polymorphic
+SNPs and a balanced case/control phenotype, so `plink --logistic` produces
+non-degenerate results on every cohort. It is NOT biologically meaningful — it
+only exercises the pipeline end to end, the same way
+examples/federated-af/generate-shards.py produces synthetic VCFs.
 """
 from __future__ import annotations
 
@@ -19,25 +22,42 @@ import argparse
 import os
 import random
 
-ALLELES = ("A", "C")  # A = major (A1), C = minor (A2)
 
+def build_variants(n_snps: int, seed: int) -> tuple[list[int], list[float]]:
+    """Build the shared variant map: ascending positions + per-SNP MAF.
 
-def write_cohort(out_dir: str, name: str, n_samples: int, n_snps: int, seed: int) -> None:
+    Generated once and reused for every cohort, so rs<i> means the same locus
+    everywhere (a hard requirement for SNP-ID-keyed meta-analysis).
+    """
     rng = random.Random(seed)
-
-    # --- variants (.map) + per-SNP minor-allele frequency -------------------
-    positions = []
-    freqs = []
+    positions: list[int] = []
+    freqs: list[float] = []
     bp = 1_000_000
     for _ in range(n_snps):
         bp += rng.randint(200, 2000)
         positions.append(bp)
         freqs.append(rng.uniform(0.1, 0.45))  # keep SNPs polymorphic
+    return positions, freqs
 
-    map_path = os.path.join(out_dir, f"{name}.map")
-    with open(map_path, "w") as fh:
+
+def write_map(out_dir: str, name: str, positions: list[int]) -> None:
+    with open(os.path.join(out_dir, f"{name}.map"), "w") as fh:
         for i, pos in enumerate(positions):
             fh.write(f"22\trs{i+1}\t0\t{pos}\n")
+
+
+def write_cohort(
+    out_dir: str,
+    name: str,
+    n_samples: int,
+    positions: list[int],
+    freqs: list[float],
+    seed: int,
+) -> None:
+    rng = random.Random(seed)
+
+    # Shared variant map (same IDs/positions/alleles across all cohorts).
+    write_map(out_dir, name, positions)
 
     # --- samples (.ped) -----------------------------------------------------
     ped_path = os.path.join(out_dir, f"{name}.ped")
@@ -51,7 +71,7 @@ def write_cohort(out_dir: str, name: str, n_samples: int, n_snps: int, seed: int
 
             genos = []
             for p in freqs:
-                # minor-allele count under Hardy-Weinberg
+                # minor-allele count under Hardy-Weinberg (A = major, C = minor)
                 minor = sum(1 for _ in range(2) if rng.random() < p)
                 if minor == 0:
                     genos.append("A A")
@@ -85,9 +105,14 @@ def main() -> None:
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
+
+    # One shared variant definition for every cohort.
+    positions, freqs = build_variants(args.snps, args.seed)
+
     names = [f"cohort{chr(ord('A') + i)}" for i in range(args.cohorts)]
     for i, name in enumerate(names):
-        write_cohort(args.out_dir, name, args.samples, args.snps, args.seed + i)
+        # Genotypes/phenotypes/covariates vary per cohort; the map does not.
+        write_cohort(args.out_dir, name, args.samples, positions, freqs, args.seed + 1000 + i)
         print(f"wrote {name}: {args.samples} samples x {args.snps} SNPs -> {args.out_dir}/{name}.{{ped,map,cov}}")
 
 

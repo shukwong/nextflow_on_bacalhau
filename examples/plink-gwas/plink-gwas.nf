@@ -89,7 +89,7 @@ process metaAnalysis {
     cat cohorts.txt
 
     plink1.9 \\
-        --meta-analysis \$(cat cohorts.txt) logscale \\
+        --meta-analysis \$(cat cohorts.txt) + logscale \\
         --meta-analysis-snp-field SNP \\
         --meta-analysis-chr-field CHR \\
         --meta-analysis-bp-field BP \\
