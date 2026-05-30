@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"node -e \\\"const {JSDOM} = require('jsdom'); const dom = new JSDOM(''); const win = dom.window; console.log('hasLS:', !!win.localStorage); console.log('clear:', typeof win.localStorage?.cle...",
-  "error": "Exit code 1\n[/Users/wendywong/GIT/nextflow_on_bacalhau/dashboard/node_modules/jsdom/lib/jsdom/browser/Window.js:464\n        throw DOMException.create(window, [\n        ^\n\nSecurityError: localStorage is not available for opaque origins]\n\nNode.js v25.5.0",
-  "timestamp": "2026-04-18T18:10:03.529Z",
-  "retry_count": 1
-}
