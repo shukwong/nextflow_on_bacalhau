@@ -1,0 +1,379 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1780061964662,
+  "projectRoot": "/Users/wendywong/GIT/nextflow_on_bacalhau",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Java/Kotlin",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "build.gradle"
+        ]
+      },
+      {
+        "name": "C/C++",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "Makefile"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "gradle",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "make build",
+    "testCommand": "make test",
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "examples",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "build": {
+      "path": "build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1780061964518,
+      "keyFiles": []
+    },
+    "dashboard": {
+      "path": "dashboard",
+      "purpose": null,
+      "fileCount": 12,
+      "lastAccessed": 1780061964519,
+      "keyFiles": [
+        "README.md",
+        "next-env.d.ts",
+        "next.config.mjs",
+        "package-lock.json",
+        "package.json"
+      ]
+    },
+    "design": {
+      "path": "design",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780061964519,
+      "keyFiles": [
+        "federation-dashboard.md"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 10,
+      "lastAccessed": 1780061964520,
+      "keyFiles": [
+        "architecture.md",
+        "configuration.md",
+        "contributing.md",
+        "data-handling.md",
+        "federation-dashboard.md"
+      ]
+    },
+    "examples": {
+      "path": "examples",
+      "purpose": "Example code",
+      "fileCount": 4,
+      "lastAccessed": 1780061964520,
+      "keyFiles": [
+        "hello-world.nf",
+        "nextflow.config",
+        "nextflow.local.config",
+        "run-hello-world.sh"
+      ]
+    },
+    "gradle": {
+      "path": "gradle",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1780061964521,
+      "keyFiles": [
+        "groovyOptions.groovy"
+      ]
+    },
+    "manuscript": {
+      "path": "manuscript",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1780061964521,
+      "keyFiles": [
+        "README.md",
+        "applications-note.md",
+        "refs.bib"
+      ]
+    },
+    "site": {
+      "path": "site",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1780061964522,
+      "keyFiles": [
+        "404.html",
+        "index.html",
+        "requirements.txt",
+        "sitemap.xml",
+        "sitemap.xml.gz"
+      ]
+    },
+    "site-coordinator": {
+      "path": "site-coordinator",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1780061964523,
+      "keyFiles": [
+        "Dockerfile",
+        "README.md",
+        "docker-compose.yaml",
+        "pyproject.toml"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1780061964524,
+      "keyFiles": []
+    },
+    "dashboard/node_modules": {
+      "path": "dashboard/node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 1,
+      "lastAccessed": 1780061964528,
+      "keyFiles": []
+    },
+    "docs/examples": {
+      "path": "docs/examples",
+      "purpose": "Example code",
+      "fileCount": 2,
+      "lastAccessed": 1780061964528,
+      "keyFiles": [
+        "federated-af.md",
+        "hello-world.md"
+      ]
+    },
+    "site/assets": {
+      "path": "site/assets",
+      "purpose": "Static assets",
+      "fileCount": 0,
+      "lastAccessed": 1780061964529,
+      "keyFiles": []
+    },
+    "site/examples": {
+      "path": "site/examples",
+      "purpose": "Example code",
+      "fileCount": 0,
+      "lastAccessed": 1780061964530,
+      "keyFiles": []
+    },
+    "site-coordinator/src": {
+      "path": "site-coordinator/src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1780061964530,
+      "keyFiles": []
+    },
+    "src/test": {
+      "path": "src/test",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1780061964530,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "examples/plink-gwas/plink-gwas.nf",
+      "accessCount": 43,
+      "lastAccessed": 1780148249566,
+      "type": "file"
+    },
+    {
+      "path": "src/main/groovy/nextflow/executor/BacalhauExecutor.groovy",
+      "accessCount": 28,
+      "lastAccessed": 1780151642369,
+      "type": "file"
+    },
+    {
+      "path": "examples/plink-gwas/plink-gwas.config",
+      "accessCount": 25,
+      "lastAccessed": 1780142373648,
+      "type": "file"
+    },
+    {
+      "path": "examples/federated-af/nextflow.config",
+      "accessCount": 12,
+      "lastAccessed": 1780142064040,
+      "type": "file"
+    },
+    {
+      "path": "examples/plink-gwas/README.md",
+      "accessCount": 8,
+      "lastAccessed": 1780142556634,
+      "type": "file"
+    },
+    {
+      "path": "examples/federated-af/main.nf",
+      "accessCount": 6,
+      "lastAccessed": 1780142006640,
+      "type": "file"
+    },
+    {
+      "path": "examples/plink-gwas/DATA_SCENARIOS.md",
+      "accessCount": 6,
+      "lastAccessed": 1780142579550,
+      "type": "file"
+    },
+    {
+      "path": "DOCKER_TESTING.md",
+      "accessCount": 5,
+      "lastAccessed": 1780103552717,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 5,
+      "lastAccessed": 1780152068266,
+      "type": "file"
+    },
+    {
+      "path": "TESTING_REMOTE.md",
+      "accessCount": 4,
+      "lastAccessed": 1780102543856,
+      "type": "file"
+    },
+    {
+      "path": "docs/installation.md",
+      "accessCount": 4,
+      "lastAccessed": 1780152077306,
+      "type": "file"
+    },
+    {
+      "path": "examples/federated-af/README.md",
+      "accessCount": 4,
+      "lastAccessed": 1780152083439,
+      "type": "file"
+    },
+    {
+      "path": "examples/run-hello-world.sh",
+      "accessCount": 3,
+      "lastAccessed": 1780103572927,
+      "type": "file"
+    },
+    {
+      "path": "manuscript/applications-note.md",
+      "accessCount": 3,
+      "lastAccessed": 1780103596303,
+      "type": "file"
+    },
+    {
+      "path": "docs/examples/hello-world.md",
+      "accessCount": 3,
+      "lastAccessed": 1780152106727,
+      "type": "file"
+    },
+    {
+      "path": "src/test/groovy/nextflow/executor/BacalhauTaskHandlerTest.groovy",
+      "accessCount": 2,
+      "lastAccessed": 1780072689561,
+      "type": "file"
+    },
+    {
+      "path": "docs/contributing.md",
+      "accessCount": 2,
+      "lastAccessed": 1780099992388,
+      "type": "file"
+    },
+    {
+      "path": "CLAUDE.md",
+      "accessCount": 2,
+      "lastAccessed": 1780102526431,
+      "type": "file"
+    },
+    {
+      "path": "PHASE1_SUMMARY.md",
+      "accessCount": 2,
+      "lastAccessed": 1780103603873,
+      "type": "file"
+    },
+    {
+      "path": "examples/federated-af/run.sh",
+      "accessCount": 2,
+      "lastAccessed": 1780142201138,
+      "type": "file"
+    },
+    {
+      "path": "examples/plink-gwas/generate-plink-data.py",
+      "accessCount": 2,
+      "lastAccessed": 1780147378320,
+      "type": "file"
+    },
+    {
+      "path": "src/test/groovy/nextflow/executor/BacalhauTaskMonitorTest.groovy",
+      "accessCount": 2,
+      "lastAccessed": 1780150953949,
+      "type": "file"
+    },
+    {
+      "path": "src/main/groovy/nextflow/executor/BacalhauTaskMonitor.groovy",
+      "accessCount": 2,
+      "lastAccessed": 1780151036447,
+      "type": "file"
+    },
+    {
+      "path": "src/test/groovy/nextflow/executor/BacalhauExecutorTest.groovy",
+      "accessCount": 2,
+      "lastAccessed": 1780151684393,
+      "type": "file"
+    },
+    {
+      "path": "docs/status.md",
+      "accessCount": 2,
+      "lastAccessed": 1780152061931,
+      "type": "file"
+    },
+    {
+      "path": "docs/examples/federated-af.md",
+      "accessCount": 2,
+      "lastAccessed": 1780152113810,
+      "type": "file"
+    },
+    {
+      "path": "Makefile",
+      "accessCount": 1,
+      "lastAccessed": 1780102488207,
+      "type": "file"
+    },
+    {
+      "path": "examples/plink-gwas/run.sh",
+      "accessCount": 1,
+      "lastAccessed": 1780142497687,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

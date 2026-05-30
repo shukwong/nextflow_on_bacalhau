@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__plugin_everything-claude-code_github__add_issue_comment",
+  "tool_input_preview": "{\"owner\":\"shukwong\",\"repo\":\"nextflow_on_bacalhau\",\"issue_number\":9,\"body\":\"Thanks @codex — both P1 findings are correct and I'm fixing them. I verified each against PLINK 1.9 semantics:\\n\\n**1. Missin...",
+  "error": "MCP error -32603: Authentication Failed: Requires authentication",
+  "timestamp": "2026-05-30T13:22:06.382Z",
+  "retry_count": 1
+}

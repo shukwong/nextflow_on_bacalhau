@@ -46,7 +46,7 @@ Prerequisites:
 
 - Docker Desktop (running)
 - `bacalhau` v1.7.x on PATH
-- Nextflow 24.10.0 or later (set `NEXTFLOW_BIN` to point to your binary)
+- Nextflow 24.10.x (LTS); 25.x+ not yet supported, pin with `NXF_VER=24.10.0` (set `NEXTFLOW_BIN` to point to your binary)
 - Java 17 for Nextflow runtime (Nextflow 24.10 still runs on JDK 17)
 - Python 3
 
