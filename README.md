@@ -11,7 +11,7 @@ This plugin enables Nextflow workflows to submit containerized tasks to a Bacalh
 ### Prerequisites
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: Version 24.10.0 or later
+2. **Nextflow**: 24.10.x (LTS). Nextflow 25.x and newer are not yet supported — run e.g. `NXF_VER=24.10.0 nextflow run ...`
 3. **Java**: JDK 21 (required only when building the plugin from source)
 
 ### Option A — Install from the Nextflow Plugin Registry

@@ -1,0 +1,175 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776537888225,
+  "projectRoot": "/Users/wendywong/GIT/nextflow_on_bacalhau/dashboard",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18.17",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "14.2.15",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "vitest",
+        "version": "2.1.9",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": "Node.js 18.17"
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev -p 3000",
+      "build": "next build",
+      "start": "next start -p 3000",
+      "lint": "next lint",
+      "typecheck": "tsc --noEmit",
+      "test": "vitest run",
+      "test:watch": "vitest"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1776537887989,
+      "keyFiles": []
+    },
+    "src/app": {
+      "path": "src/app",
+      "purpose": "Application code",
+      "fileCount": 4,
+      "lastAccessed": 1776537888021,
+      "keyFiles": [
+        "globals.css",
+        "layout.tsx",
+        "page.tsx"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 9,
+      "lastAccessed": 1776537888032,
+      "keyFiles": [
+        "executions-timeline.tsx",
+        "invariant-banner.tsx",
+        "jobs-table.tsx"
+      ]
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 7,
+      "lastAccessed": 1776537888044,
+      "keyFiles": [
+        "coordinator-types.ts",
+        "coordinator.ts",
+        "pooled-af.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776537960433,
+      "type": "file"
+    },
+    {
+      "path": "vitest.setup.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776538005787,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/coordinator.ts",
+      "accessCount": 2,
+      "lastAccessed": 1776538037079,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/__tests__/sites-storage.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776537911669,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1776537912091,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/__tests__/coordinator.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776538027342,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/sites-storage.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776551285989,
+      "type": "file"
+    },
+    {
+      "path": "src/app/settings/page.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1776551292154,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
