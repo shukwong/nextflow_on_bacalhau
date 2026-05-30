@@ -11,10 +11,24 @@ This plugin enables Nextflow workflows to submit containerized tasks to a Bacalh
 ### Prerequisites
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: 23.10.x. Newer Nextflow internal APIs are not yet supported.
-3. **Java**: JDK 17 for building and running Nextflow 23.10.x
+2. **Nextflow**: Version 24.10.0 or later
+3. **Java**: JDK 21 (required only when building the plugin from source)
 
-### Build and Install
+### Option A — Install from the Nextflow Plugin Registry
+
+Once published to the [Nextflow Plugin Registry](https://registry.nextflow.io), the
+plugin can be installed by Nextflow directly — no local build required:
+
+```groovy
+// nextflow.config
+plugins {
+    id 'nf-bacalhau@0.1.0'
+}
+```
+
+Nextflow will download and cache the plugin on first run.
+
+### Option B — Build and Install Locally
 
 ```bash
 # Clone the repository
@@ -22,14 +36,10 @@ git clone https://github.com/shukwong/nextflow_on_bacalhau
 cd nextflow_on_bacalhau
 
 # Build the plugin
-./gradlew assemble
+make assemble       # or: ./gradlew assemble
 
-# Stage into ~/.nextflow/plugins/ for local testing
-PLUGIN_DIR="$HOME/.nextflow/plugins/nf-bacalhau-0.1.0-SNAPSHOT"
-rm -rf "$PLUGIN_DIR"
-mkdir -p "$PLUGIN_DIR/classes" "$PLUGIN_DIR/lib"
-cp build/libs/nf-bacalhau-0.1.0-SNAPSHOT.jar "$PLUGIN_DIR/lib/"
-(cd "$PLUGIN_DIR/classes" && unzip -oq "../lib/nf-bacalhau-0.1.0-SNAPSHOT.jar")
+# Install into ~/.nextflow/plugins
+make install        # or: ./gradlew install
 ```
 
 ## Configuration
@@ -39,7 +49,7 @@ Configure your Nextflow workflow to use the Bacalhau executor:
 ```groovy
 // nextflow.config
 plugins {
-    id 'nf-bacalhau@0.1.0-SNAPSHOT'
+    id 'nf-bacalhau@0.1.0'
 }
 
 process {
@@ -194,7 +204,8 @@ process {
 - ✅ JSON-based queue status parsing
 - ✅ Input validation and security hardening
 
-**Upcoming (Phase 4):**
+**Phase 4 (in progress):**
+- ✅ Nextflow Plugin Registry packaging (`io.nextflow.nextflow-plugin` Gradle plugin)
 - 🚧 Performance tuning and optimization
 - 🚧 Extensive integration testing with live Bacalhau cluster
 - 🚧 Advanced networking configuration
@@ -214,20 +225,34 @@ process {
 ### Building
 
 ```bash
-./gradlew build
+make assemble         # or: ./gradlew assemble
 ```
 
 ### Testing
 
 ```bash
-./gradlew test
+make test             # or: ./gradlew test
 ```
 
 ### Integration Testing
 
 ```bash
-./gradlew integrationTest
+make integration-test # or: ./gradlew integrationTest
 ```
+
+### Publishing to the Nextflow Plugin Registry
+
+1. Claim the plugin at <https://registry.nextflow.io/claim-plugin> using the
+   `provider` declared in `build.gradle` (currently `nf-bacalhau`).
+2. Add your registry access token to `$HOME/.gradle/gradle.properties`:
+   ```
+   npr.apiKey=<your-token>
+   ```
+   Alternatively, export `NPR_API_KEY` in the environment.
+3. Release:
+   ```bash
+   make release       # or: ./gradlew releasePlugin
+   ```
 
 ## Contributing
 

@@ -90,8 +90,8 @@ workflow {
 
 ## Run it
 
-Prerequisites: Docker Desktop, `bacalhau` v1.7.x, Nextflow 23.10.x on PATH
-as `nextflow23` (or `NEXTFLOW_BIN=...`), Java 17, Python 3.
+Prerequisites: Docker Desktop, `bacalhau` v1.7.x, Nextflow 24.10+ on PATH
+(or `NEXTFLOW_BIN=...`), Java 17 (Nextflow runtime), Python 3.
 
 ```bash
 ./examples/federated-af/run.sh
