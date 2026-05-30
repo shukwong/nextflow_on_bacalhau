@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
 
+from ..auth import require_operator
 from ..models import RunState
 
 router = APIRouter(tags=["counts"])
 
 
-@router.get("/counts/{run_id}")
+@router.get("/counts/{run_id}", dependencies=[Depends(require_operator)])
 async def get_counts(run_id: str, request: Request) -> FileResponse:
     settings = request.app.state.settings
     store = request.app.state.store

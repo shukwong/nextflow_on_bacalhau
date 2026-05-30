@@ -46,8 +46,8 @@ Prerequisites:
 
 - Docker Desktop (running)
 - `bacalhau` v1.7.x on PATH
-- Nextflow 23.10.x as `nextflow23` on PATH (set `NEXTFLOW_BIN` to override)
-- Java 17 (auto-detected from `openjdk@17` Homebrew installs)
+- Nextflow 24.10.0 or later (set `NEXTFLOW_BIN` to point to your binary)
+- Java 17 for Nextflow runtime (Nextflow 24.10 still runs on JDK 17)
 - Python 3
 
 ```bash

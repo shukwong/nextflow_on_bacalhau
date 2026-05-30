@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Download, XCircle } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { cancelRun, getCountsUrl } from '@/lib/coordinator';
+import { cancelRun, fetchCounts } from '@/lib/coordinator';
 import { useSiteRun } from '@/hooks/use-coordinator';
 import { useSites } from '@/lib/sites-context';
 import type { CoordinatorSiteRun } from '@/lib/coordinator-types';
@@ -18,6 +19,8 @@ export default function RunDetailPage() {
   const queryClient = useQueryClient();
 
   const runQuery = useSiteRun(site, runId);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const cancelMutation = useMutation({
     mutationFn: () => cancelRun(site!, runId!),
@@ -54,7 +57,28 @@ export default function RunDetailPage() {
   if (!run) return <Shell>Run not found.</Shell>;
 
   const terminal = run.state === 'succeeded' || run.state === 'failed' || run.state === 'cancelled';
-  const countsUrl = run.state === 'succeeded' ? `${site.coordinatorUrl}/v1/counts/${run.run_id}` : null;
+  const canDownloadCounts = run.state === 'succeeded';
+
+  const handleDownloadCounts = async () => {
+    if (isDownloading) return;
+    setDownloadError(null);
+    setIsDownloading(true);
+    try {
+      const blob = await fetchCounts(site, run.run_id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${run.run_id}-counts.tsv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
@@ -77,14 +101,16 @@ export default function RunDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {countsUrl && (
-            <a
-              href={countsUrl}
-              className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1.5 text-xs text-accent ring-1 ring-inset ring-accent/30 hover:bg-accent/25"
+          {canDownloadCounts && (
+            <button
+              type="button"
+              onClick={handleDownloadCounts}
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1 rounded-md bg-accent/15 px-3 py-1.5 text-xs text-accent ring-1 ring-inset ring-accent/30 hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-3 w-3" />
-              counts.tsv
-            </a>
+              {isDownloading ? 'Downloading…' : 'counts.tsv'}
+            </button>
           )}
           {!terminal && (
             <button
@@ -103,6 +129,11 @@ export default function RunDetailPage() {
       {cancelMutation.error && (
         <div className="rounded-md border border-state-err/30 bg-state-err/10 p-3 text-xs text-state-err">
           {(cancelMutation.error as Error).message}
+        </div>
+      )}
+      {downloadError && (
+        <div className="rounded-md border border-state-err/30 bg-state-err/10 p-3 text-xs text-state-err">
+          {downloadError}
         </div>
       )}
 

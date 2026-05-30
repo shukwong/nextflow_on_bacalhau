@@ -11,8 +11,9 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
+from contextlib import suppress
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -87,17 +88,15 @@ class NextflowLauncher:
             pid=proc.pid,
             workdir=spec.workdir,
             counts_path=counts_path,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             log_path=log_path,
         )
 
     def cancel(self, handle: LaunchHandle) -> None:
         if handle.pid is None:
             return
-        try:
+        with suppress(ProcessLookupError):
             os.killpg(os.getpgid(handle.pid), 15)  # SIGTERM the process group
-        except ProcessLookupError:
-            pass
 
     def poll(self, handle: LaunchHandle) -> int | None:
         if handle.pid is None:
@@ -153,7 +152,7 @@ class FakeLauncher:
             pid=None,
             workdir=spec.workdir,
             counts_path=counts_path,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             log_path=spec.workdir / "nextflow.log",
         )
 

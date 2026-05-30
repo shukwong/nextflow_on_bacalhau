@@ -4,28 +4,42 @@ A Nextflow executor plugin for running workflows on [Bacalhau](https://bacalhau.
 
 ## Overview
 
-This plugin enables Nextflow workflows to execute on Bacalhau's distributed compute network, bringing computation closer to data and leveraging distributed resources across multiple nodes.
+This plugin enables Nextflow workflows to submit containerized tasks to a Bacalhau orchestrator. The current implementation is suitable for local or shared-filesystem Bacalhau deployments; fully remote data staging is limited to explicitly configured Bacalhau input sources such as S3.
 
 ## Installation
 
 ### Prerequisites
 
 1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: Version 23.10.1 or later
-3. **Java**: JDK 11 (required for building the plugin)
+2. **Nextflow**: Version 24.10.0 or later
+3. **Java**: JDK 21 (required only when building the plugin from source)
 
-### Build and Install
+### Option A — Install from the Nextflow Plugin Registry
+
+Once published to the [Nextflow Plugin Registry](https://registry.nextflow.io), the
+plugin can be installed by Nextflow directly — no local build required:
+
+```groovy
+// nextflow.config
+plugins {
+    id 'nf-bacalhau@0.1.0'
+}
+```
+
+Nextflow will download and cache the plugin on first run.
+
+### Option B — Build and Install Locally
 
 ```bash
 # Clone the repository
-git clone https://github.com/nextflow-io/nextflow-bacalhau-executor
-cd nextflow-bacalhau-executor
+git clone https://github.com/shukwong/nextflow_on_bacalhau
+cd nextflow_on_bacalhau
 
 # Build the plugin
-./gradlew build
+make assemble       # or: ./gradlew assemble
 
-# Publish to local Maven repository
-./gradlew publishToMavenLocal
+# Install into ~/.nextflow/plugins
+make install        # or: ./gradlew install
 ```
 
 ## Configuration
@@ -35,7 +49,7 @@ Configure your Nextflow workflow to use the Bacalhau executor:
 ```groovy
 // nextflow.config
 plugins {
-    id 'nf-bacalhau@0.1.0-SNAPSHOT'
+    id 'nf-bacalhau@0.1.0'
 }
 
 process {
@@ -46,9 +60,6 @@ process {
 bacalhau {
     bacalhauCliPath   = 'bacalhau'                 // Path to the Bacalhau CLI binary
     bacalhauNode      = 'https://api.bacalhau.org' // API endpoint
-    waitForCompletion = true                       // Wait for job completion
-    maxRetries        = 3                          // Retry failed jobs (must be >= 0)
-    storageEngine     = 'ipfs'                     // One of: 'ipfs', 's3', 'local'
     s3Region          = 'us-east-1'                // AWS region for s3:// inputs
 }
 ```
@@ -62,9 +73,6 @@ All options above may also be supplied under `process.ext`, but the dedicated
 |---|---|---|
 | `bacalhauCliPath` | `bacalhau` | Path to the Bacalhau CLI binary |
 | `bacalhauNode` | `https://api.bacalhau.org` | Bacalhau API endpoint |
-| `waitForCompletion` | `true` | Wait for job completion |
-| `maxRetries` | `3` | Retry count for failed jobs (non-negative) |
-| `storageEngine` | `ipfs` | Storage backend: `ipfs`, `s3`, or `local` |
 | `s3Region` | `us-east-1` | AWS region used for `s3://` input sources |
 
 ## Usage
@@ -173,8 +181,8 @@ process {
 - **Resource Management**: CPU, memory, disk, time, and GPU (`accelerator`) constraints
 - **Job Monitoring**: Cached queue-status polling with failure backoff
 - **Error Handling**: Comprehensive error reporting and retry mechanisms
-- **Distributed Computing**: Leverages Bacalhau's distributed network
-- **Native S3 and `host://` Input Sources**: Fetch directly from S3 or bind-mount node-local paths
+- **Bacalhau Submission**: Submits Nextflow tasks to a configured Bacalhau orchestrator
+- **Native S3 and `host://` Input Sources**: Fetch directly from S3 or bind-mount node-local/shared paths
 - **Secret Injection**: Forward local environment variables to jobs via `ext.bacalhauSecrets`
 
 ## Development Status
@@ -196,31 +204,55 @@ process {
 - ✅ JSON-based queue status parsing
 - ✅ Input validation and security hardening
 
-**Upcoming (Phase 4):**
+**Phase 4 (in progress):**
+- ✅ Nextflow Plugin Registry packaging (`io.nextflow.nextflow-plugin` Gradle plugin)
 - 🚧 Performance tuning and optimization
 - 🚧 Extensive integration testing with live Bacalhau cluster
 - 🚧 Advanced networking configuration
 - 🚧 Comprehensive documentation and examples
+
+## Known Limitations
+
+- Local `path` inputs and the task work directory are mounted as Bacalhau `localDirectory` sources. Remote workers must be able to see those paths, so this is not yet a general-purpose remote data staging layer.
+- `bacalhau.waitForCompletion`, `bacalhau.maxRetries`, and `bacalhau.storageEngine` from early prototype configs are ignored. Use Nextflow `process.errorStrategy` and `process.maxRetries` for retry behavior.
+- The site coordinator and dashboard are demo components. `/runs` and
+  `/counts` routes require the configured bearer token, but the demo uses one
+  shared token for read and write privileges, and dashboard operator tokens
+  are stored in browser `localStorage`.
 
 ## Development
 
 ### Building
 
 ```bash
-./gradlew build
+make assemble         # or: ./gradlew assemble
 ```
 
 ### Testing
 
 ```bash
-./gradlew test
+make test             # or: ./gradlew test
 ```
 
 ### Integration Testing
 
 ```bash
-./gradlew integrationTest
+make integration-test # or: ./gradlew integrationTest
 ```
+
+### Publishing to the Nextflow Plugin Registry
+
+1. Claim the plugin at <https://registry.nextflow.io/claim-plugin> using the
+   `provider` declared in `build.gradle` (currently `nf-bacalhau`).
+2. Add your registry access token to `$HOME/.gradle/gradle.properties`:
+   ```
+   npr.apiKey=<your-token>
+   ```
+   Alternatively, export `NPR_API_KEY` in the environment.
+3. Release:
+   ```bash
+   make release       # or: ./gradlew releasePlugin
+   ```
 
 ## Contributing
 
@@ -234,4 +266,4 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - [Nextflow Community Forum](https://community.nextflow.io)
 - [Bacalhau Documentation](https://docs.bacalhau.org)
-- [GitHub Issues](https://github.com/nextflow-io/nextflow-bacalhau-executor/issues)
+- [GitHub Issues](https://github.com/shukwong/nextflow_on_bacalhau/issues)

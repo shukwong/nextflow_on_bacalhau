@@ -30,20 +30,21 @@ bacalhau node list
 
 ## Step 2: Build and Install the Plugin
 
-You must publish the plugin to your local Maven repository (`~/.m2`) so Nextflow can load it.
+Install the plugin into your local Nextflow plugins directory (`~/.nextflow/plugins`) so Nextflow can load it. Building the plugin requires **JDK 21**.
 
-**Option A: Using Docker (Recommended if Java 17 is missing)**
+**Option A: Using Local Gradle / Make**
+```bash
+make install        # or: ./gradlew install
+```
+
+**Option B: Using Docker (if JDK 21 is missing locally)**
 ```bash
 docker run --rm \
     -v "$PWD":/home/gradle/project \
+    -v "$HOME/.nextflow":/home/gradle/.nextflow \
     -w /home/gradle/project \
-    gradle:jdk17 \
-    gradle publishToMavenLocal
-```
-
-**Option B: Using Local Gradle**
-```bash
-./gradlew publishToMavenLocal
+    gradle:jdk21 \
+    gradle install
 ```
 
 ## Step 3: Run a Test Workflow
@@ -51,7 +52,7 @@ docker run --rm \
 1. Create a `nextflow.config` file in your test folder:
    ```groovy
    plugins {
-       id 'nf-bacalhau@0.1.0-SNAPSHOT'
+       id 'nf-bacalhau@0.1.0'
    }
 
    process {
@@ -87,6 +88,6 @@ docker run --rm \
 
 ## Troubleshooting
 
-*   **"Plugin not found"**: Ensure you ran `publishToMavenLocal` successfully and that `~/.m2/repository/io/nextflow/nf-bacalhau/` exists.
+*   **"Plugin not found"**: Ensure you ran `make install` (or `./gradlew install`) successfully and that `~/.nextflow/plugins/nf-bacalhau-0.1.0/` exists.
 *   **"Connection refused"**: Double-check your `BACALHAU_API_HOST` variable.
 *   **"File not found"**: Remember that files on your local machine are mapped to `/tmp` inside the container. The plugin handles this automatically for input files declared in the process `input:` block.

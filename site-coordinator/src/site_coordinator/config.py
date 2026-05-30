@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     operator_token: str | None = Field(
         default=None,
         description=(
-            "Bearer token required for POST /runs and cancel. If unset, all "
-            "writes are denied. Reads remain unauthenticated on localhost."
+            "Bearer token required for /runs and /counts endpoints. If unset, "
+            "all run metadata, launch/cancel, and counts requests are denied."
         ),
     )

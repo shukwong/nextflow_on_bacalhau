@@ -121,10 +121,22 @@ export async function cancelRun(
   });
 }
 
-export async function getCountsUrl(
+export async function fetchCounts(
   site: SiteConfig,
   runId: string,
-): Promise<string> {
-  // Returned as a URL rather than a Blob so the browser can download or stream.
-  return `${site.coordinatorUrl}/v1/counts/${runId}`;
+): Promise<Blob> {
+  const url = `${site.coordinatorUrl}/v1/counts/${runId}`;
+  const res = await fetch(url, {
+    headers: authHeaders(site),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    const raw = await res.text().catch(() => '');
+    throw new CoordinatorError(
+      `${site.label} (${site.coordinatorUrl}) → HTTP ${res.status}`,
+      res.status,
+      raw || null,
+    );
+  }
+  return res.blob();
 }

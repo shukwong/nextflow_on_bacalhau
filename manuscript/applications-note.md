@@ -210,8 +210,8 @@ holds.
 **Programming language.** Groovy (plugin), Python (example data generator),
 Nextflow DSL2 (example pipeline).
 
-**Other requirements.** Nextflow ≥ 23.10.1; Bacalhau CLI 1.7.x; Java 17
-for building; Docker for local compute-node testing.
+**Other requirements.** Nextflow ≥ 24.10.0; Bacalhau CLI 1.7.x; JDK 21
+for building (Nextflow runs on Java 17+); Docker for local compute-node testing.
 
 **Licence.** Apache Licence 2.0.
 
@@ -228,7 +228,7 @@ illustration — the pattern (per-site reduction to aggregates, central
 pooling of aggregates) is the backbone of production federated-GWAS
 consortia and can be extended in-place.
 
-Current limitations are: (i) the plugin targets Nextflow 23.10.x (a 25.x
+Current limitations are: (i) the plugin targets Nextflow 24.10.x (a 25.x
 port is planned); (ii) job state is polled rather than event-driven, which
 caps responsiveness at the five-second cache TTL; and (iii) the executor
 shells out to the Bacalhau CLI rather than a native Java client. Planned

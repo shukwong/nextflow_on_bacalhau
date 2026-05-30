@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from ..auth import require_operator
 from ..launcher import LaunchSpec
 from ..models import RunAcceptance, RunList, RunRequest, RunState, SiteRun
+from ..store import RunStore
 
 router = APIRouter(tags=["runs"])
 
@@ -31,7 +33,7 @@ async def create_run(body: RunRequest, request: Request) -> RunAcceptance:
 
     run_id = new_run_id()
     workdir = settings.workdir_root / "runs" / run_id
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     site_run = SiteRun(
         run_id=run_id,
@@ -63,28 +65,39 @@ async def create_run(body: RunRequest, request: Request) -> RunAcceptance:
     )
 
 
-@router.get("/runs", response_model=RunList)
+@router.get(
+    "/runs",
+    response_model=RunList,
+    dependencies=[Depends(require_operator)],
+)
 async def list_runs(
     request: Request,
-    limit: int = Query(
-        default=_LIST_DEFAULT_LIMIT,
-        ge=1,
-        le=_LIST_MAX_LIMIT,
-        description="Max runs to return (most-recent-first).",
-    ),
-    state: RunState | None = Query(
-        default=None, description="Filter by terminal/non-terminal state."
-    ),
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=_LIST_MAX_LIMIT,
+            description="Max runs to return (most-recent-first).",
+        ),
+    ] = _LIST_DEFAULT_LIMIT,
+    state: Annotated[
+        RunState | None,
+        Query(description="Filter by terminal/non-terminal state."),
+    ] = None,
 ) -> RunList:
-    store = request.app.state.store
+    store: RunStore = request.app.state.store
     all_runs = sorted(store.all(), key=lambda r: r.started_at, reverse=True)
     filtered = [r for r in all_runs if state is None or r.state == state]
     return RunList(runs=tuple(filtered[:limit]), total=len(filtered))
 
 
-@router.get("/runs/{run_id}", response_model=SiteRun)
+@router.get(
+    "/runs/{run_id}",
+    response_model=SiteRun,
+    dependencies=[Depends(require_operator)],
+)
 async def get_run(run_id: str, request: Request) -> SiteRun:
-    store = request.app.state.store
+    store: RunStore = request.app.state.store
     run = store.get(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail=f"Unknown run_id: {run_id}")
@@ -97,7 +110,7 @@ async def get_run(run_id: str, request: Request) -> SiteRun:
     dependencies=[Depends(require_operator)],
 )
 async def cancel_run(run_id: str, request: Request) -> SiteRun:
-    store = request.app.state.store
+    store: RunStore = request.app.state.store
     supervisor = request.app.state.supervisor
 
     run = store.get(run_id)

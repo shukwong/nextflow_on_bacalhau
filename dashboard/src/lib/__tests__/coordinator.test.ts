@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CoordinatorError,
   createRun,
-  getCountsUrl,
+  fetchCounts,
   getRun,
   listRuns,
   probeCoordinator,
@@ -123,7 +123,7 @@ describe('probeCoordinator', () => {
 
 describe('createRun', () => {
   it('POSTs JSON body with content-type', async () => {
-    const spy = mockFetch((_url, init) =>
+    const spy = mockFetch(() =>
       new Response(
         JSON.stringify({
           run_id: 'r1',
@@ -143,9 +143,15 @@ describe('createRun', () => {
   });
 });
 
-describe('getCountsUrl', () => {
-  it('concatenates base URL with counts path', async () => {
-    const url = await getCountsUrl(site, 'run-123');
+describe('fetchCounts', () => {
+  it('fetches counts with bearer auth', async () => {
+    const spy = mockFetch(() => new Response('counts', { status: 200 }));
+    const blob = await fetchCounts(site, 'run-123');
+    expect(await blob.text()).toBe('counts');
+    const url = spy.mock.calls[0]![0] as string;
     expect(url).toBe('https://a.example/v1/counts/run-123');
+    const init = spy.mock.calls[0]![1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers.Authorization).toBe('Bearer secret');
   });
 });

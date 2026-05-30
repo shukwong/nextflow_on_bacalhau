@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .config import Settings
@@ -64,7 +64,7 @@ class RunSupervisor:
             self._store.update(
                 run_id,
                 state=RunState.FAILED,
-                finished_at=datetime.now(timezone.utc),
+                finished_at=datetime.now(UTC),
             )
 
     async def _finalize(self, run_id: str, exit_code: int, handle: LaunchHandle) -> None:
@@ -81,7 +81,7 @@ class RunSupervisor:
         self._store.update(
             run_id,
             state=state,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
             invariant=inv,
             result_digest=digest,
         )
@@ -97,7 +97,7 @@ class RunSupervisor:
         self._store.update(
             run_id,
             state=RunState.CANCELLED,
-            finished_at=datetime.now(timezone.utc),
+            finished_at=datetime.now(UTC),
         )
         return True
 

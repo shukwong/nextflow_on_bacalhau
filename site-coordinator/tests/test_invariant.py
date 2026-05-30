@@ -13,7 +13,6 @@ from site_coordinator.invariant import (
     digest_file,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

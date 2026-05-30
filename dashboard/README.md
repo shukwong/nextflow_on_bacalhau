@@ -11,7 +11,7 @@ across the federation.
 
 ## Requirements
 
-- Node.js ≥ 18.17
+- Node.js ≥ 20.9
 - One or more reachable [site-coordinator](../site-coordinator/README.md)
   instances — the dashboard talks to their `/v1/*` endpoints directly from the
   browser.
@@ -67,7 +67,8 @@ Per-run view showing:
   (6 columns, no sample-id headers, bounded size). Failures block the counts
   download.
 - **Download counts.tsv** — shown when state is `succeeded` and invariant
-  passed. Streams directly from `{coordinatorUrl}/v1/counts/{runId}`.
+  passed. Fetches `{coordinatorUrl}/v1/counts/{runId}` with the configured
+  bearer token, then downloads the returned TSV.
 - **Cancel** — POSTs `/v1/runs/{runId}/cancel`. Non-terminal runs only.
 
 ### Settings (`/settings`) — manage sites
@@ -130,10 +131,10 @@ The coordinator isn't reachable, or its CORS doesn't include this origin.
 `curl -v https://coord.site.example/v1/healthz` from your machine first;
 fix network/DNS before touching CORS.
 
-**Health pill is red with "HTTP 401".**
+**Run list, run detail, cancel, or counts download fails with "HTTP 401".**
 Operator token is missing or stale. Edit the site and paste the right one.
-`/v1/healthz` itself doesn't require auth, but the dashboard's other calls do
-— if health is green and only runs/cancel fail, the token is the suspect.
+`/v1/healthz` itself doesn't require auth, so green health plus failing run
+operations usually means the token is wrong.
 
 **Runs list is empty but I launched one.**
 Check that you launched against the correct coordinator URL. The dashboard

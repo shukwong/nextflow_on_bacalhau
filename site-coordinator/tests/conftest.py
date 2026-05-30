@@ -27,6 +27,7 @@ class _StubBacalhau(BacalhauClient):
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+AUTH_HEADERS = {"Authorization": "Bearer test-token"}
 
 
 @pytest.fixture
@@ -91,7 +92,7 @@ def wait_for_state(
     deadline = time.monotonic() + timeout
     last: dict = {}
     while time.monotonic() < deadline:
-        resp = client.get(f"/v1/runs/{run_id}")
+        resp = client.get(f"/v1/runs/{run_id}", headers=AUTH_HEADERS)
         assert resp.status_code == 200, resp.text
         last = resp.json()
         if last["state"] in states:

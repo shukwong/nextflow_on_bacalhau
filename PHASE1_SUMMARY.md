@@ -1,5 +1,11 @@
 # Phase 1 Development Summary - Bacalhau Executor for Nextflow
 
+> **Historical note.** This document records the original Phase 1 implementation
+> and is kept for provenance. The build/publication flow has since migrated to the
+> `io.nextflow.nextflow-plugin` Gradle plugin (build with JDK 21, publish via
+> `./gradlew releasePlugin`), the manual `MANIFEST.MF` is gone, and the minimum
+> Nextflow version is now 24.10.0. See `README.md` and `docs/` for current instructions.
+
 ## Overview
 
 Phase 1 of the Nextflow Bacalhau executor development has been **completed successfully**. This phase focused on establishing the core infrastructure and foundational components required for the executor plugin.

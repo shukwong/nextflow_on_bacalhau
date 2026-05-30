@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DEFAULT_API = 'http://localhost:1234';
 
+type RouteContext = { params: Promise<{ path: string[] }> };
+
 function targetFor(pathSegs: string[], search: string): string {
   const base = process.env.BACALHAU_API_URL ?? DEFAULT_API;
   const path = pathSegs.map(encodeURIComponent).join('/');
@@ -19,11 +21,12 @@ function targetFor(pathSegs: string[], search: string): string {
 
 async function forward(
   request: NextRequest,
-  ctx: { params: { path: string[] } },
+  ctx: RouteContext,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
 ): Promise<NextResponse> {
   const url = new URL(request.url);
-  const target = targetFor(ctx.params.path ?? [], url.search);
+  const params = await ctx.params;
+  const target = targetFor(params.path ?? [], url.search);
 
   const init: RequestInit = {
     method,
@@ -61,28 +64,28 @@ async function forward(
 
 export async function GET(
   request: NextRequest,
-  ctx: { params: { path: string[] } },
+  ctx: RouteContext,
 ) {
   return forward(request, ctx, 'GET');
 }
 
 export async function POST(
   request: NextRequest,
-  ctx: { params: { path: string[] } },
+  ctx: RouteContext,
 ) {
   return forward(request, ctx, 'POST');
 }
 
 export async function PUT(
   request: NextRequest,
-  ctx: { params: { path: string[] } },
+  ctx: RouteContext,
 ) {
   return forward(request, ctx, 'PUT');
 }
 
 export async function DELETE(
   request: NextRequest,
-  ctx: { params: { path: string[] } },
+  ctx: RouteContext,
 ) {
   return forward(request, ctx, 'DELETE');
 }

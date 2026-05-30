@@ -1,6 +1,6 @@
 # Testing with Docker
 
-This project requires **Java 17** to build and test, as mandated by the Nextflow dependencies. If you do not have Java 17 installed locally, or if you are experiencing version conflicts (e.g., with a newer Java version), you can use Docker to run the tests in a clean, isolated environment.
+This project requires **JDK 21** to build and test, as mandated by the `io.nextflow.nextflow-plugin` Gradle plugin. If you do not have JDK 21 installed locally, or if you are experiencing version conflicts, you can use Docker to run the tests in a clean, isolated environment.
 
 ## Prerequisites
 
@@ -8,13 +8,13 @@ This project requires **Java 17** to build and test, as mandated by the Nextflow
 
 ## Running Tests
 
-Run the following command in the root of the repository to execute the full test suite using the official Gradle Docker image (which includes JDK 17):
+Run the following command in the root of the repository to execute the full test suite using the official Gradle Docker image (which includes JDK 21):
 
 ```bash
 docker run --rm \
     -v "$PWD":/home/gradle/project \
     -w /home/gradle/project \
-    gradle:jdk17 \
+    gradle:jdk21 \
     gradle test
 ```
 
@@ -23,7 +23,7 @@ docker run --rm \
 *   `docker run --rm`: Runs a container and automatically removes it after it exits.
 *   `-v "$PWD":/home/gradle/project`: Mounts your current working directory (the plugin code) into the container at `/home/gradle/project`.
 *   `-w /home/gradle/project`: Sets the working directory inside the container to the mounted project folder.
-*   `gradle:jdk17`: Uses the official Docker image for Gradle with Java 17.
+*   `gradle:jdk21`: Uses the official Docker image for Gradle with JDK 21.
 *   `gradle test`: The command to execute the standard Gradle test task.
 
 ## Troubleshooting
@@ -47,7 +47,7 @@ docker run --rm \
     -u $(id -u):$(id -g) \
     -v "$PWD":/home/gradle/project \
     -w /home/gradle/project \
-    gradle:jdk17 \
+    gradle:jdk21 \
     gradle test
 ```
 

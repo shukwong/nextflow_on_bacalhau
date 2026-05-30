@@ -43,8 +43,8 @@ BacalhauExecutor extends AbstractGridExecutor
 
 ### Plugin Development
 ```bash
-./gradlew publishToMavenLocal      # Publish plugin locally
-./gradlew generatePom              # Generate POM for distribution
+./gradlew install                  # Stage plugin into ~/.nextflow/plugins (or: make install)
+./gradlew releasePlugin            # Publish to the Nextflow Plugin Registry (or: make release)
 ```
 
 ## Project Structure
@@ -70,13 +70,11 @@ The executor is configured in `nextflow.config`:
 ```groovy
 process {
     executor = 'bacalhau'
-    
-    ext {
-        bacalhauNode = 'https://api.bacalhau.org'  # API endpoint  
-        waitForCompletion = true                    # Job submission mode
-        maxRetries = 3                             # Retry failed jobs
-        storageEngine = 'ipfs'                     # Storage backend
-    }
+}
+
+bacalhau {
+    bacalhauNode = 'https://api.bacalhau.org'
+    s3Region = 'us-east-1'
 }
 ```
 

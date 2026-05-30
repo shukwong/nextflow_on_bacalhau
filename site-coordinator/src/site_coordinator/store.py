@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import tempfile
 import threading
+from collections.abc import Iterator
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
 
 from .models import InvariantResult, RunState, SiteRun, TaskSnapshot
 
@@ -119,10 +120,8 @@ class RunStore:
         finally:
             import os
 
-            try:
+            with suppress(OSError):
                 os.close(fd)
-            except OSError:
-                pass
 
     def _load(self) -> None:
         assert self._snapshot_path is not None

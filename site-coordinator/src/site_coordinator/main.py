@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import AsyncIterator
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,7 +59,7 @@ def create_app(
 
         snapshot_path = workdir_root / "state" / "runs.json"
         app.state.store = run_store or RunStore(snapshot_path=snapshot_path)
-        reset = app.state.store.reset_stale_runs(datetime.now(timezone.utc))
+        reset = app.state.store.reset_stale_runs(datetime.now(UTC))
         if reset:
             logging.getLogger(__name__).warning(
                 "reset %d stale non-terminal run(s) on startup", reset
