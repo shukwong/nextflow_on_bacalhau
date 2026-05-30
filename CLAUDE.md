@@ -43,8 +43,8 @@ BacalhauExecutor extends AbstractGridExecutor
 
 ### Plugin Development
 ```bash
-./gradlew publishToMavenLocal      # Publish plugin locally
-./gradlew generatePom              # Generate POM for distribution
+./gradlew install                  # Stage plugin into ~/.nextflow/plugins (or: make install)
+./gradlew releasePlugin            # Publish to the Nextflow Plugin Registry (or: make release)
 ```
 
 ## Project Structure
