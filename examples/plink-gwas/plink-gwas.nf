@@ -20,14 +20,23 @@
 params.data_dir = "${projectDir}/data"
 params.outdir   = 'results'
 
-// PLINK 1.9 from Ubuntu's universe repo. ubuntu:22.04 is multi-arch, so this
-// runs on both x86_64 and Apple-Silicon Bacalhau nodes (the plink biocontainer
-// is amd64-only and fails on arm64 — see examples/federated-af history).
+// Install PLINK 1.9 from bioconda via micromamba. This works on BOTH x86_64 and
+// arm64 Bacalhau nodes — the Ubuntu `plink1.9` apt package is amd64-only (no
+// arm64 candidate) and the plink biocontainer is amd64-only too, so neither runs
+// on Apple-Silicon nodes. bioconda ships linux-64 and linux-aarch64 builds.
 INSTALL_PLINK = '''
     set -e
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
-    apt-get install -qq -y --no-install-recommends plink1.9 >/dev/null
+    apt-get install -qq -y --no-install-recommends curl bzip2 ca-certificates >/dev/null
+    case "$(uname -m)" in
+        x86_64)        MAMBA_ARCH=linux-64 ;;
+        aarch64|arm64) MAMBA_ARCH=linux-aarch64 ;;
+        *)             MAMBA_ARCH=linux-64 ;;
+    esac
+    curl -Ls "https://micro.mamba.pm/api/micromamba/${MAMBA_ARCH}/latest" | tar -xj bin/micromamba
+    ./bin/micromamba create -y -p /opt/plinkenv -c bioconda -c conda-forge plink >/dev/null
+    export PATH="/opt/plinkenv/bin:$PATH"
 '''
 
 process runGWAS {
@@ -48,7 +57,7 @@ process runGWAS {
     """
     ${INSTALL_PLINK}
 
-    plink1.9 \\
+    plink \\
         --file "/inputs/${name}" \\
         --covar "/inputs/${cov.name}" \\
         --logistic beta hide-covar \\
@@ -79,8 +88,10 @@ process metaAnalysis {
 
     script:
     // --logistic emitted BETA (log-odds) via the `beta` modifier, so the
-    // meta-analysis uses `logscale` to read the BETA column. .assoc.logistic
-    // has no A2 column, so A2 is intentionally not mapped.
+    // meta-analysis uses `logscale` for inverse-variance weighting on the BETA
+    // column. PLINK derives the combined P from BETA+SE here, so no p-field is
+    // passed (--meta-analysis-p-field is only valid with `weighted-z`).
+    // .assoc.logistic has no A2 column, so A2 is intentionally not mapped.
     """
     ${INSTALL_PLINK}
 
@@ -88,14 +99,13 @@ process metaAnalysis {
     echo "Cohorts in meta-analysis:"
     cat cohorts.txt
 
-    plink1.9 \\
+    plink \\
         --meta-analysis \$(cat cohorts.txt) + logscale \\
         --meta-analysis-snp-field SNP \\
         --meta-analysis-chr-field CHR \\
         --meta-analysis-bp-field BP \\
         --meta-analysis-a1-field A1 \\
         --meta-analysis-se-field SE \\
-        --meta-analysis-p-field P \\
         --out meta_analysis
 
     if [ ! -s meta_analysis.meta ]; then
