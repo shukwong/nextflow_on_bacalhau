@@ -57,16 +57,24 @@ This example is honest about what the current executor does and does **not** do:
 - Nextflow 24.10.0 or later (set `NEXTFLOW_BIN` to point at your binary)
 - Java 17 for the Nextflow runtime (Nextflow 24.10 still runs on JDK 17)
 - Python 3
+- The [`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau) plugin — installed
+  from the Nextflow Plugin Registry, or a local checkout to build from (set
+  `NF_BACALHAU_REPO`)
 
 ## Run it
 
 ```bash
-./examples/plink-gwas/run.sh
+# build the plugin from a local checkout and stage it:
+NF_BACALHAU_REPO=/path/to/nf-bacalhau ./examples/plink-gwas/run.sh
+# ...or, if the plugin is already installed (e.g. from the registry):
+./examples/plink-gwas/run.sh --skip-build
 ```
 
 The runner will:
 
-1. Build and stage the `nf-bacalhau` plugin into `~/.nextflow/plugins/`.
+1. Build the `nf-bacalhau` plugin from `NF_BACALHAU_REPO` and stage it into
+   `~/.nextflow/plugins/` (skipped by `--skip-build`, which uses an
+   already-installed plugin).
 2. Start a local Bacalhau compute node (if one isn't already on
    `localhost:1234`) with the writable-local-path allowlist the plugin needs.
 3. Generate synthetic PLINK filesets for 3 cohorts (no network download).

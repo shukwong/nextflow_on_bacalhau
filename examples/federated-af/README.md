@@ -49,15 +49,21 @@ Prerequisites:
 - Nextflow 24.10.x (LTS); 25.x+ not yet supported, pin with `NXF_VER=24.10.0` (set `NEXTFLOW_BIN` to point to your binary)
 - Java 17 for Nextflow runtime (Nextflow 24.10 still runs on JDK 17)
 - Python 3
+- The [`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau) plugin — installed
+  from the Nextflow Plugin Registry, or a local checkout to build from (set
+  `NF_BACALHAU_REPO`)
 
 ```bash
-./examples/federated-af/run.sh
+# build the plugin from a local checkout and stage it:
+NF_BACALHAU_REPO=/path/to/nf-bacalhau ./examples/federated-af/run.sh
+# ...or, if the plugin is already installed (e.g. from the registry):
+./examples/federated-af/run.sh --skip-build
 ```
 
 The runner will:
 
-1. Build and stage the `nf-bacalhau` plugin snapshot into
-   `~/.nextflow/plugins/`.
+1. Build the `nf-bacalhau` plugin from `NF_BACALHAU_REPO` and stage it into
+   `~/.nextflow/plugins/` (skipped by `--skip-build`).
 2. Start a local Bacalhau compute node (if one isn't already on
    `localhost:1234`) with the writable-local-path allowlist needed by the
    plugin.
