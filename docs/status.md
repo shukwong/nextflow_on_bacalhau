@@ -1,64 +1,45 @@
 # Status & Roadmap
 
-## Completed (Phases 1–3)
+This repository is the **federated-genomics research stack**. The `nf-bacalhau`
+executor plugin it builds on has its own status in the
+[plugin repo](https://github.com/shukwong/nf-bacalhau); this page tracks the
+research components.
 
-- [x] Core executor infrastructure (`AbstractGridExecutor` extension)
-- [x] Job submission and monitoring via Bacalhau CLI
-- [x] Docker container support
-- [x] Script and input file staging
-- [x] Output file retrieval and verification
-- [x] Resource management: CPU, memory, disk, time, GPU
-- [x] Native S3 input support
-- [x] Host-path input support (`host://` URIs)
-- [x] Secret injection via `ext.bacalhauSecrets`
-- [x] Comprehensive error handling with timeouts
-- [x] Result retrieval failures fail the task instead of defaulting to success
-- [x] Consistent Bacalhau API endpoint use across submit, poll, stop, and get
-- [x] Configuration validation and loading
-- [x] Thread-safe synchronization in queue-status cache
-- [x] Strict job-ID validation
-- [x] JSON-based queue-status parsing with pagination support
-- [x] Input validation and security hardening
+## What works
 
-## In progress (Phase 4)
+- [x] **Federated PLINK GWAS example** (`examples/plink-gwas/`) — runs end to end
+  on a local Bacalhau node (Nextflow 24.10.0): per-cohort GWAS plus
+  inverse-variance meta-analysis, with `check.sh` verifying the privacy invariant.
+- [x] **Federated allele-frequency example** (`examples/federated-af/`).
+- [x] **Site coordinator** (`site-coordinator/`) — FastAPI supervisor / auth /
+  audit / launcher, with `ruff` / `mypy` / `pytest`.
+- [x] **Federation dashboard** (`dashboard/`) — Next.js site registration and run
+  launching.
 
-- [x] Packaged for the Nextflow plugin registry via `io.nextflow.nextflow-plugin`
-- [ ] First public release to the plugin registry (requires provider claim)
-- [ ] Performance tuning and optimization
-- [ ] Extensive integration testing against a multi-node Bacalhau cluster
-- [ ] Advanced networking configuration
-- [ ] Benchmarking against Slurm / AWS Batch / Kubernetes for the genomics
-      reference workload
-- [ ] Expanded documentation and end-to-end examples
+## In progress / planned
+
+- [ ] Multi-site deployment guide and reference topology.
+- [ ] Harden the coordinator/dashboard beyond demo security (per-principal
+  tokens, server-side secret store) — see below.
+- [ ] Multi-node / cross-site benchmarking for the manuscript.
+- [ ] Expanded examples and documentation.
 
 ## Known limitations
 
-- **Registry publication pending.** The plugin is packaged and ready for
-  `./gradlew releasePlugin`, but the `nf-bacalhau` provider still needs to
-  be claimed at <https://registry.nextflow.io/claim-plugin>. Until that
-  ships, users install via `make install` (local staging).
-- **Nextflow 24.10.x (LTS) required.** The plugin manifest declares
-  `Plugin-Requires: >=24.10.0`, so Nextflow 23.10.x refuses to load it.
-  Nextflow **25.x and newer are not yet supported** — they removed the
-  executor config helpers this build uses, so the plugin aborts with a clear
-  message (see `BacalhauExecutor.checkNextflowVersion`). Run with 24.10.x,
-  e.g. `NXF_VER=24.10.0 nextflow run ...`. A 25.x port is planned.
-- **CLI dependency.** The executor shells out to the Bacalhau CLI; future
-  work will evaluate a native client library when one becomes available.
-- **Local-path staging requires path visibility.** Local `path` inputs and the
-  task work directory are mounted as Bacalhau `localDirectory` sources, so
-  compute nodes must be local or share those paths. Use S3 input sources for
-  remote object data.
-- **Queue status is cached, not event-driven.** Large workflows (thousands
-  of concurrent tasks) will spend noticeable wall-time in the 5-second poll
-  cycle. A subscribe-based model is a future optimization.
-- **Coordinator/dashboard are demo security.** Coordinator `/runs` and
-  `/counts` routes require the configured bearer token, but the demo uses one
-  shared operator token for read and write privileges. Dashboard operator
-  tokens are kept in browser localStorage.
+- **Demo security.** Coordinator `/runs` and `/counts` require the configured
+  bearer token, but the demo uses one shared token for read and write, and
+  dashboard operator tokens are kept in browser `localStorage`. Treat as
+  demonstration software — see
+  [SECURITY.md](https://github.com/shukwong/nextflow_on_bacalhau/blob/main/SECURITY.md).
+- **Nextflow 24.10.x only**, inherited from the plugin — run examples with
+  `NXF_VER=24.10.0`.
+- **Local-path staging requires path visibility** — compute nodes must see the
+  referenced paths; use S3 inputs for remote object data.
+- **Not a compliance certification.** "Only summary statistics leave a task" is a
+  verifiable output property, not HIPAA/GDPR certification.
 
 ## Where to get help
 
-- **GitHub Issues**: [shukwong/nextflow_on_bacalhau/issues](https://github.com/shukwong/nextflow_on_bacalhau/issues)
+- **Research-stack issues**: [shukwong/nextflow_on_bacalhau/issues](https://github.com/shukwong/nextflow_on_bacalhau/issues)
+- **Plugin issues**: [shukwong/nf-bacalhau](https://github.com/shukwong/nf-bacalhau)
 - **Bacalhau docs**: [docs.bacalhau.org](https://docs.bacalhau.org)
-- **Nextflow community**: [community.nextflow.io](https://community.nextflow.io)

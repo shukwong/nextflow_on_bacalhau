@@ -1,269 +1,81 @@
-# Nextflow Bacalhau Executor
+# Federated Genomics on Bacalhau
 
-A Nextflow executor plugin for running workflows on [Bacalhau](https://bacalhau.org), a distributed compute orchestration framework.
+Research stack for **privacy-preserving, federated genomics** on
+[Bacalhau](https://bacalhau.org) — compute-to-data pipelines where each site's
+genotypes stay home and only aggregate statistics cross the network.
 
-## Overview
+This repository is the **research / federation** home: the manuscript, the
+federation tooling (site coordinator + dashboard), and runnable end-to-end
+examples. The Nextflow executor that submits work to Bacalhau lives in its own
+repository:
 
-This plugin enables Nextflow workflows to submit containerized tasks to a Bacalhau orchestrator. The current implementation is suitable for local or shared-filesystem Bacalhau deployments; fully remote data staging is limited to explicitly configured Bacalhau input sources such as S3.
+> **Plugin:** [`shukwong/nf-bacalhau`](https://github.com/shukwong/nf-bacalhau)
+> — the `nf-bacalhau` Nextflow executor plugin (installable from the Nextflow
+> Plugin Registry). This repo consumes it as a published artifact and contains
+> no plugin source or Gradle build.
 
-## Installation
+## What's here
 
-### Prerequisites
-
-1. **Bacalhau CLI**: Install Bacalhau following the [official installation guide](https://docs.bacalhau.org/getting-started/installation)
-2. **Nextflow**: 24.10.x (LTS). Nextflow 25.x and newer are not yet supported — run e.g. `NXF_VER=24.10.0 nextflow run ...`
-3. **Java**: JDK 21 (required only when building the plugin from source)
-
-### Option A — Install from the Nextflow Plugin Registry
-
-Once published to the [Nextflow Plugin Registry](https://registry.nextflow.io), the
-plugin can be installed by Nextflow directly — no local build required:
-
-```groovy
-// nextflow.config
-plugins {
-    id 'nf-bacalhau@0.1.0'
-}
-```
-
-Nextflow will download and cache the plugin on first run.
-
-### Option B — Build and Install Locally
-
-```bash
-# Clone the repository
-git clone https://github.com/shukwong/nextflow_on_bacalhau
-cd nextflow_on_bacalhau
-
-# Build the plugin
-make assemble       # or: ./gradlew assemble
-
-# Install into ~/.nextflow/plugins
-make install        # or: ./gradlew install
-```
-
-## Configuration
-
-Configure your Nextflow workflow to use the Bacalhau executor:
-
-```groovy
-// nextflow.config
-plugins {
-    id 'nf-bacalhau@0.1.0'
-}
-
-process {
-    executor = 'bacalhau'
-}
-
-// Dedicated Bacalhau scope (preferred — takes precedence over process.ext)
-bacalhau {
-    bacalhauCliPath   = 'bacalhau'                 // Path to the Bacalhau CLI binary
-    bacalhauNode      = 'https://api.bacalhau.org' // API endpoint
-    s3Region          = 'us-east-1'                // AWS region for s3:// inputs
-}
-```
-
-All options above may also be supplied under `process.ext`, but the dedicated
-`bacalhau { }` block wins when both are set.
-
-### Configuration Reference
-
-| Option | Default | Description |
+| Component | Path | What it is |
 |---|---|---|
-| `bacalhauCliPath` | `bacalhau` | Path to the Bacalhau CLI binary |
-| `bacalhauNode` | `https://api.bacalhau.org` | Bacalhau API endpoint |
-| `s3Region` | `us-east-1` | AWS region used for `s3://` input sources |
+| **Examples** | `examples/plink-gwas/`, `examples/federated-af/` | Runnable federated pipelines: a PLINK GWAS meta-analysis and an allele-frequency aggregation, each keeping per-site genotypes local |
+| **Site coordinator** | `site-coordinator/` | FastAPI service (supervisor, auth, audit, launcher) for running a node per site — **demo security, see below** |
+| **Dashboard** | `dashboard/` | Next.js federation dashboard for registering sites and launching runs — **demo security** |
+| **Manuscript** | `manuscript/` | The applications-note manuscript and figures |
 
-## Usage
+## Quickstart — the federated GWAS demo
 
-### Basic Example
+Runs a per-cohort PLINK GWAS next to each cohort's data on a local Bacalhau
+node, then meta-analyses the per-SNP summaries — individual genotypes never
+leave a task.
 
-```groovy
-// main.nf
-process sayHello {
-    container 'ubuntu:latest'
-    
-    input:
-    val name
-    
-    output:
-    stdout
-    
-    script:
-    """
-    echo "Hello, ${name} from Bacalhau!"
-    """
-}
-
-workflow {
-    names = Channel.of('World', 'Nextflow', 'Bacalhau')
-    sayHello(names) | view
-}
-```
-
-Run the workflow:
+**Prerequisites:** Docker, the `bacalhau` CLI, **Nextflow 24.10.x** (the plugin
+requires 24.10 LTS and rejects 25.x — run with `NXF_VER=24.10.0`), Java 17+,
+Python 3, and the `nf-bacalhau` plugin (from the registry, or built from a local
+checkout via `NF_BACALHAU_REPO=/path/to/nf-bacalhau`).
 
 ```bash
-nextflow run main.nf -with-docker
+# using a local plugin checkout:
+NF_BACALHAU_REPO=~/GIT/nf-bacalhau ./examples/plink-gwas/run.sh
+# or, once the plugin is installed from the registry:
+./examples/plink-gwas/run.sh --skip-build
 ```
 
-### Resource Constraints
+The runner stages the plugin, starts a local node, generates synthetic cohorts,
+runs the pipeline, and verifies the privacy invariant
+(`examples/plink-gwas/check.sh`): the meta-analysis pools per-SNP records across
+cohorts and **no sample-level identifier leaves any task**.
 
-Specify compute resources using standard Nextflow directives:
+See [`examples/plink-gwas/README.md`](examples/plink-gwas/README.md) and the
+[federated allele-frequency example](examples/federated-af/README.md).
 
-```groovy
-process computeTask {
-    container 'python:3.9'
-    cpus 2
-    memory '4.GB'
-    disk '10.GB'  // Optional disk requirement
-    time '30m'
-    accelerator 1 // Requests 1 GPU
-    
-    script:
-    """
-    python -c "import time; print('Computing...'); time.sleep(10)"
-    """
-}
-```
+## The privacy story
 
-Supported resource directives: `cpus`, `memory`, `disk`, `time`, `accelerator`.
+The compute-to-data case for federated genomics: each institution's genotype
+matrix is mounted **read-only** into a task that runs next to it, and only
+per-SNP association statistics (or integer allele counts) are written back. The
+example runners assert this automatically. It is a *verifiable property of the
+outputs*, not a compliance certification — see each example's limitations.
 
-### Data Handling
+## Federation tooling — demo security ⚠️
 
-**S3 Inputs:**
-To process data directly from S3 without downloading it to your local machine first, simply pass the `s3://` URI string to the process input. The executor will configure the Bacalhau job to fetch it directly.
+`site-coordinator/` and `dashboard/` let you run a coordinator per site and drive
+runs from a dashboard. They are **demonstration components**: the coordinator's
+`/runs` and `/counts` routes use a single shared bearer token for both read and
+write, and the dashboard stores operator tokens in browser `localStorage`. Use
+them only on trusted workstations/networks. See [SECURITY.md](SECURITY.md).
 
-```groovy
-process analyzeS3 {
-    input:
-    val s3_path // e.g. "s3://my-bucket/data.csv"
-    
-    script:
-    """
-    # File is mounted at /inputs/<filename>
-    process_data /inputs/data.csv
-    """
-}
-```
+## Documentation
 
-**Host Path Inputs:**
-To use files that already exist on the remote node's filesystem (where the compute job runs), use the `host://` prefix. This creates a bind mount from the host path to the container input path.
-
-```groovy
-process analyzeLocal {
-    input:
-    val local_path // e.g. "host:///data/reference_genome.fa"
-    
-    script:
-    """
-    # File is mounted at /inputs/reference_genome.fa
-    process_data /inputs/reference_genome.fa
-    """
-}
-```
-
-**Secrets:**
-To pass sensitive information (like API keys or AWS credentials) to the remote job, define them in your `nextflow.config` under `ext.bacalhauSecrets`. These must match environment variables available in your local shell.
-
-```groovy
-// nextflow.config
-process {
-    executor = 'bacalhau'
-    ext.bacalhauSecrets = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
-}
-```
-
-## Features
-
-- **Docker Container Support**: Executes processes in Docker containers
-- **Resource Management**: CPU, memory, disk, time, and GPU (`accelerator`) constraints
-- **Job Monitoring**: Cached queue-status polling with failure backoff
-- **Error Handling**: Comprehensive error reporting and retry mechanisms
-- **Bacalhau Submission**: Submits Nextflow tasks to a configured Bacalhau orchestrator
-- **Native S3 and `host://` Input Sources**: Fetch directly from S3 or bind-mount node-local/shared paths
-- **Secret Injection**: Forward local environment variables to jobs via `ext.bacalhauSecrets`
-
-## Development Status
-
-**Completed (Phase 1, 2 & 3):**
-- ✅ Core executor infrastructure
-- ✅ Basic job submission and monitoring
-- ✅ Docker container support
-- ✅ Script and input file staging
-- ✅ Output file retrieval and verification
-- ✅ Advanced resource management (GPU, Env Vars)
-- ✅ Native S3 Input Support
-- ✅ Host Path Input Support
-- ✅ Secret Injection via Config
-- ✅ Comprehensive error handling with timeouts
-- ✅ Configuration validation and loading
-- ✅ Thread-safe synchronization
-- ✅ Strict job ID validation
-- ✅ JSON-based queue status parsing
-- ✅ Input validation and security hardening
-
-**Phase 4 (in progress):**
-- ✅ Nextflow Plugin Registry packaging (`io.nextflow.nextflow-plugin` Gradle plugin)
-- 🚧 Performance tuning and optimization
-- 🚧 Extensive integration testing with live Bacalhau cluster
-- 🚧 Advanced networking configuration
-- 🚧 Comprehensive documentation and examples
-
-## Known Limitations
-
-- Local `path` inputs and the task work directory are mounted as Bacalhau `localDirectory` sources. Remote workers must be able to see those paths, so this is not yet a general-purpose remote data staging layer.
-- `bacalhau.waitForCompletion`, `bacalhau.maxRetries`, and `bacalhau.storageEngine` from early prototype configs are ignored. Use Nextflow `process.errorStrategy` and `process.maxRetries` for retry behavior.
-- The site coordinator and dashboard are demo components. `/runs` and
-  `/counts` routes require the configured bearer token, but the demo uses one
-  shared token for read and write privileges, and dashboard operator tokens
-  are stored in browser `localStorage`.
-
-## Development
-
-### Building
-
-```bash
-make assemble         # or: ./gradlew assemble
-```
-
-### Testing
-
-```bash
-make test             # or: ./gradlew test
-```
-
-### Integration Testing
-
-```bash
-make integration-test # or: ./gradlew integrationTest
-```
-
-### Publishing to the Nextflow Plugin Registry
-
-1. Claim the plugin at <https://registry.nextflow.io/claim-plugin> using the
-   `provider` declared in `build.gradle` (currently `nf-bacalhau`).
-2. Add your registry access token to `$HOME/.gradle/gradle.properties`:
-   ```
-   npr.apiKey=<your-token>
-   ```
-   Alternatively, export `NPR_API_KEY` in the environment.
-3. Release:
-   ```bash
-   make release       # or: ./gradlew releasePlugin
-   ```
-
-## Contributing
-
-Contributions are welcome! Please see the [contributing guidelines](CONTRIBUTING.md) for details.
+Built with MkDocs (`mkdocs serve`); see [`docs/`](docs/) — the federation
+dashboard guide, examples, and status. Executor/plugin documentation lives in the
+[plugin repo](https://github.com/shukwong/nf-bacalhau).
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+Apache License 2.0 — see [LICENSE](LICENSE).
 
 ## Support
 
-- [Nextflow Community Forum](https://community.nextflow.io)
-- [Bacalhau Documentation](https://docs.bacalhau.org)
 - [GitHub Issues](https://github.com/shukwong/nextflow_on_bacalhau/issues)
+- [Bacalhau docs](https://docs.bacalhau.org) · [Nextflow community](https://community.nextflow.io)

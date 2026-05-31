@@ -1,108 +1,57 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) when working in this repository.
 
-## Project Overview
+## Project overview
 
-This repository implements a Nextflow executor plugin for Bacalhau, enabling Nextflow workflows to run on Bacalhau's distributed compute network. The integration follows the **Executor Plugin** approach, creating a custom Nextflow executor that submits jobs to Bacalhau.
+This is the **research repository** for privacy-preserving, federated genomics on
+[Bacalhau](https://bacalhau.org). It holds the manuscript, the federation tooling
+(site coordinator + dashboard), and runnable end-to-end examples. The Nextflow
+executor plugin that submits jobs to Bacalhau is a **separate project**:
+[`shukwong/nf-bacalhau`](https://github.com/shukwong/nf-bacalhau). This repo
+consumes that plugin as a published artifact (`plugins { id 'nf-bacalhau@...' }`)
+and contains **no** plugin source or Gradle build.
 
-## Key Concepts
+## Components & scope
 
-- **Nextflow**: Workflow management system using dataflow programming model
-- **Bacalhau**: Distributed compute orchestration framework that brings compute to data
-- **Executor Plugin**: Nextflow extension that handles job submission to specific compute environments
-- **TaskHandler**: Manages individual task lifecycle (submission, monitoring, completion)
-- **Job Translation**: Converting Nextflow process definitions to Bacalhau job specifications
+| Path | Stack | Purpose |
+|---|---|---|
+| `examples/plink-gwas/` | Nextflow + PLINK (bioconda) | Federated GWAS meta-analysis demo + `check.sh` reproducibility/privacy gate |
+| `examples/federated-af/` | Nextflow + bcftools | Federated allele-frequency aggregation demo |
+| `site-coordinator/` | Python 3.12, FastAPI, hatchling | Per-site coordinator (supervisor, auth, audit, launcher). Demo security. |
+| `dashboard/` | Next.js, TypeScript | Federation dashboard. Demo security. |
+| `manuscript/` | Markdown | Applications-note manuscript + figures |
+| `docs/` | MkDocs (material) | Documentation site |
 
-## Architecture
+## Development commands
 
-The Bacalhau executor follows Nextflow's established patterns:
-
-```
-BacalhauExecutor extends AbstractGridExecutor
-├── BacalhauTaskHandler extends GridTaskHandler  
-├── BacalhauTaskMonitor extends TaskPollingMonitor
-└── Configuration via process.executor = 'bacalhau'
-```
-
-### Core Components
-
-1. **BacalhauExecutor**: Main executor class managing job lifecycle
-2. **BacalhauTaskHandler**: Individual task submission and monitoring via Bacalhau CLI
-3. **Job Translation Layer**: Maps Nextflow directives to Bacalhau job parameters
-4. **Status Polling**: Monitors job status using `bacalhau list/describe` commands
-
-## Development Commands
-
-### Build and Test
 ```bash
-./gradlew build                    # Build the plugin
-./gradlew test                     # Run unit tests  
-./gradlew integrationTest          # Run integration tests
+# Examples — need Docker, the bacalhau CLI, Nextflow 24.10.x, and the nf-bacalhau plugin.
+# Build the plugin from a local checkout, or pass --skip-build to use a registry-installed one.
+NF_BACALHAU_REPO=~/GIT/nf-bacalhau ./examples/plink-gwas/run.sh
+./examples/federated-af/run.sh
+
+# Site coordinator
+cd site-coordinator && pip install -e ".[dev]" && ruff check . && mypy && pytest
+
+# Dashboard
+cd dashboard && npm ci && npm run typecheck && npm test && npm run build
+
+# Docs
+mkdocs serve
 ```
 
-### Plugin Development
-```bash
-./gradlew install                  # Stage plugin into ~/.nextflow/plugins (or: make install)
-./gradlew releasePlugin            # Publish to the Nextflow Plugin Registry (or: make release)
-```
+## Important constraints
 
-## Project Structure
-
-```
-src/main/groovy/nextflow/executor/
-├── BacalhauExecutor.groovy        # Main executor implementation
-├── BacalhauTaskHandler.groovy     # Task lifecycle management
-└── BacalhauTaskMonitor.groovy     # Job status polling
-
-src/test/groovy/
-├── BacalhauExecutorTest.groovy    # Unit tests
-└── BacalhauIntegrationTest.groovy # Integration tests
-
-src/main/resources/META-INF/
-└── extensions.idx                 # Plugin service registration
-```
-
-## Configuration
-
-The executor is configured in `nextflow.config`:
-
-```groovy
-process {
-    executor = 'bacalhau'
-}
-
-bacalhau {
-    bacalhauNode = 'https://api.bacalhau.org'
-    s3Region = 'us-east-1'
-}
-```
-
-## Implementation Phases
-
-### Phase 1: Core Infrastructure
-- Basic BacalhauExecutor extending AbstractGridExecutor
-- Bacalhau CLI integration for job operations  
-- Plugin metadata and service registration
-
-### Phase 2: Job Translation
-- Map Nextflow process directives to Bacalhau job specs
-- Docker container support and resource allocation
-- Input/output file handling strategies
-
-### Phase 3: Monitoring & Status
-- Job status polling and state mapping
-- Error handling, retry mechanisms, and log collection
-- Result retrieval from completed jobs
-
-### Phase 4: Advanced Features  
-- Bacalhau-specific configurations (storage, networking)
-- Performance optimizations and comprehensive testing
-- Documentation and production deployment
-
-## Key Technical Challenges
-
-1. **Asynchronous Job Management**: Polling-based monitoring with configurable intervals
-2. **File Staging**: Input/output management across distributed nodes using Bacalhau storage
-3. **Resource Mapping**: Translating Nextflow specs (cpus, memory, time) to Bacalhau limits
-4. **Error Handling**: Distinguishing Bacalhau vs task execution errors through CLI parsing
+- **Nextflow 24.10.x (LTS) only.** The `nf-bacalhau` plugin rejects 25.x at
+  runtime. Run examples with `NXF_VER=24.10.0`. The Homebrew `nextflow` launcher
+  is version-pinned and ignores `NXF_VER`; use the official launcher to select
+  24.10.
+- **The plugin is external.** Executor behavior, job translation, and the Gradle
+  build live in [`shukwong/nf-bacalhau`](https://github.com/shukwong/nf-bacalhau).
+  Do not add plugin source here.
+- **Coordinator/dashboard are demo security** (one shared bearer token; tokens in
+  `localStorage`). Don't present them as production-ready. See [SECURITY.md](SECURITY.md).
+- **Privacy invariant.** The examples' value is that only aggregate statistics
+  leave a task; `check.sh` enforces "no sample-level identifier in any output."
+  Preserve that property in any change to an example.
