@@ -17,7 +17,12 @@ DEMO_DIR="${PROJECT_ROOT}/examples/federated-af"
 PLUGIN_VERSION="0.1.0"
 PLUGIN_ID="nf-bacalhau"
 PLUGIN_DIR="$HOME/.nextflow/plugins/${PLUGIN_ID}-${PLUGIN_VERSION}"
-PLUGIN_JAR="${PROJECT_ROOT}/build/libs/${PLUGIN_ID}-${PLUGIN_VERSION}.jar"
+# The nf-bacalhau plugin lives in its own repo now. Point NF_BACALHAU_REPO at a
+# local checkout to build+stage it, or pre-install the published plugin
+# (plugins { id 'nf-bacalhau@0.1.0' }) and pass --skip-build. PLUGIN_JAR is
+# resolved from NF_BACALHAU_REPO in the build step below.
+NF_BACALHAU_REPO="${NF_BACALHAU_REPO:-}"
+PLUGIN_JAR=""
 
 RUN_DIR="${RUN_DIR:-/tmp/nf-bacalhau-federated-af}"
 SHARDS_DIR="${RUN_DIR}/shards"
@@ -86,19 +91,24 @@ command -v java >/dev/null || fail "Java 17 not found — install openjdk@17 or 
 mkdir -p "$RUN_DIR"
 
 # ---------------------------------------------------------------------------
-# Build + stage plugin
+# Build + stage the nf-bacalhau plugin (from its own repo)
 # ---------------------------------------------------------------------------
 if ! $SKIP_BUILD; then
-  log "Building plugin (./gradlew assemble)"
-  (cd "$PROJECT_ROOT" && ./gradlew --quiet assemble)
-fi
-[[ -f "$PLUGIN_JAR" ]] || fail "Plugin JAR not found at $PLUGIN_JAR — run without --skip-build."
+  [[ -n "$NF_BACALHAU_REPO" ]] || fail "Set NF_BACALHAU_REPO to a local nf-bacalhau checkout, or pass --skip-build to use a registry-installed plugin."
+  [[ -x "$NF_BACALHAU_REPO/gradlew" ]] || fail "No gradlew under NF_BACALHAU_REPO=$NF_BACALHAU_REPO"
+  log "Building nf-bacalhau plugin from $NF_BACALHAU_REPO"
+  (cd "$NF_BACALHAU_REPO" && ./gradlew --quiet assemble)
+  PLUGIN_JAR="${NF_BACALHAU_REPO}/build/libs/${PLUGIN_ID}-${PLUGIN_VERSION}.jar"
+  [[ -f "$PLUGIN_JAR" ]] || fail "Plugin JAR not found at $PLUGIN_JAR"
 
-log "Staging plugin to $PLUGIN_DIR"
-rm -rf "$PLUGIN_DIR"
-mkdir -p "$PLUGIN_DIR/classes" "$PLUGIN_DIR/lib"
-cp "$PLUGIN_JAR" "$PLUGIN_DIR/lib/"
-(cd "$PLUGIN_DIR/classes" && unzip -oq "$PLUGIN_JAR")
+  log "Staging plugin to $PLUGIN_DIR"
+  rm -rf "$PLUGIN_DIR"
+  mkdir -p "$PLUGIN_DIR/classes" "$PLUGIN_DIR/lib"
+  cp "$PLUGIN_JAR" "$PLUGIN_DIR/lib/"
+  (cd "$PLUGIN_DIR/classes" && unzip -oq "$PLUGIN_JAR")
+else
+  log "Skipping plugin build; using already-installed nf-bacalhau (registry or pre-staged)"
+fi
 
 # ---------------------------------------------------------------------------
 # Local Bacalhau compute node

@@ -1,5 +1,5 @@
 site_name: Nextflow on Bacalhau
-site_description: A Nextflow executor plugin for running workflows on Bacalhau's distributed compute network.
+site_description: Research stack for privacy-preserving, federated genomics on Bacalhau.
 site_url: https://shukwong.github.io/nextflow_on_bacalhau/
 repo_url: https://github.com/shukwong/nextflow_on_bacalhau
 repo_name: shukwong/nextflow_on_bacalhau
@@ -62,20 +62,11 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started:
-      - Installation: installation.md
-      - Quickstart: quickstart.md
-      - Configuration: configuration.md
   - Examples:
-      - Hello World: examples/hello-world.md
       - Federated Allele Frequency: examples/federated-af.md
-  - Reference:
-      - Architecture: architecture.md
-      - Data Handling: data-handling.md
-      - Federation Dashboard: federation-dashboard.md
-  - Development:
-      - Status & Roadmap: status.md
-      - Contributing: contributing.md
+  - Federation:
+      - Dashboard: federation-dashboard.md
+  - Status & Roadmap: status.md
 
 extra:
   social:

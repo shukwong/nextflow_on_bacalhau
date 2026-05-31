@@ -1,82 +1,40 @@
-# Nextflow on Bacalhau
+# Federated Genomics on Bacalhau
 
-**Run Nextflow workflows on a configured [Bacalhau](https://bacalhau.org) orchestrator, with S3 and node-local inputs for compute-near-data workflows.**
+**Privacy-preserving, federated genomics on [Bacalhau](https://bacalhau.org):
+each site's genotypes stay home; only aggregate statistics cross the network.**
 
-## Why this plugin
+This is the research / federation documentation. The Nextflow executor that
+submits work to Bacalhau is a separate project —
+[`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau) — installed from the
+Nextflow Plugin Registry.
 
-Modern bioinformatics, scientific computing, and machine-learning pipelines routinely
-touch datasets that are too large, too slow, or too sensitive to move to a central
-cluster:
+## The idea
 
-- **Genomics shards** held by hospitals that cannot leave an institutional boundary.
-- **Geographically distributed sensor data** where bandwidth dominates runtime.
-- **Public S3-hosted reference data** you want to process without egress fees.
+The compelling case for *compute-to-data* is federated genomics. Each
+institution's genotype matrix is mounted **read-only** into a task that runs next
+to it; only per-SNP association statistics (or integer allele counts) are written
+back. The example runners assert this privacy invariant automatically.
 
-Bacalhau orchestrates containers where data is available. This plugin lets
-Nextflow target Bacalhau as its executor while preserving normal process
-directives. Current local file staging requires a local node or shared
-filesystem; use S3 inputs for remote object data.
+## Examples
 
-## What you get
+- **[Federated allele-frequency demo](examples/federated-af.md)** — the privacy
+  contract end to end against a local Bacalhau node.
+- **Federated PLINK GWAS** — a per-cohort GWAS plus inverse-variance
+  meta-analysis; see `examples/plink-gwas/README.md` in the repository.
 
-- A drop-in Nextflow executor selected by `process.executor = 'bacalhau'`.
-- Standard Nextflow resource directives (`cpus`, `memory`, `disk`, `time`,
-  `accelerator`) translate directly to Bacalhau job specs.
-- Input sources: local paths, `s3://` URIs (fetched on the compute node), and
-  `host://` bind mounts for node-local reference data.
-- Secret injection via `ext.bacalhauSecrets`.
-- Cached queue-status polling with paginated CLI support.
+## Running a federation
 
-## A 60-second tour
+The [Federation Dashboard guide](federation-dashboard.md) walks through running a
+coordinator at each site, registering them in the dashboard, launching runs, and
+the end-to-end privacy contract.
 
-```groovy title="main.nf"
-process sayHello {
-    container 'ubuntu:latest'
-    input:  val name
-    output: stdout
-    script: "echo 'Hello, ${name} from Bacalhau!'"
-}
-
-workflow {
-    Channel.of('World', 'Nextflow', 'Bacalhau') | sayHello | view
-}
-```
-
-```groovy title="nextflow.config"
-plugins { id 'nf-bacalhau@0.1.0' }
-
-process {
-    executor  = 'bacalhau'
-    container = 'ubuntu:latest'
-}
-
-bacalhau {
-    bacalhauNode = 'http://localhost:1234'
-}
-```
-
-```bash
-nextflow run main.nf
-```
-
-Next: [install the plugin](installation.md) or skip ahead to the
-[federated allele-frequency demo](examples/federated-af.md) that exercises the
-full pipeline against a local Bacalhau node.
-
-Running the federation across multiple sites? See the
-[Federation Dashboard guide](federation-dashboard.md) — it walks through
-running a coordinator at each site, registering them in the dashboard,
-launching runs, and the end-to-end privacy contract.
-
-## The privacy story
-
-The most compelling use case for *compute-to-data* is federated genomics.
-In our [federated allele-frequency demo](examples/federated-af.md), each
-hospital's genotype matrix stays on-site; only integer allele counts cross
-the network. The runner asserts the privacy invariant automatically.
+!!! warning "Demo security"
+    The site coordinator and dashboard are demonstration components — the
+    coordinator uses one shared bearer token for read and write, and the
+    dashboard stores operator tokens in browser `localStorage`. See the
+    project [SECURITY policy](https://github.com/shukwong/nextflow_on_bacalhau/blob/main/SECURITY.md).
 
 ## Status
 
-Phases 1–3 are complete: core executor, job translation, monitoring, and
-security hardening. Phase 4 (performance tuning, multi-node benchmarking,
-networking features) is in progress. See [Status & Roadmap](status.md).
+See [Status & Roadmap](status.md). The executor plugin's own roadmap lives in the
+[plugin repo](https://github.com/shukwong/nf-bacalhau).
