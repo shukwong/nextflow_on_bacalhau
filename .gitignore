@@ -57,6 +57,17 @@ out/
 coverage/
 *.tsbuildinfo
 
+# Python (site-coordinator)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
 # OMC (oh-my-claudecode) local agent state — never commit
 .omc/
 **/.omc/
