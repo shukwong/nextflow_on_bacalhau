@@ -78,8 +78,9 @@ The runner will:
 ## Output
 
 `results/meta_analysis.meta` — combined per-SNP meta-analysis. PLINK's
-`--meta-analysis` columns include `CHR SNP BP A1 A2 N P P(R) BETA BETA(R) Q I`
-(fixed- and random-effects estimates plus heterogeneity `Q`/`I²`).
+`--meta-analysis` columns are `CHR BP SNP A1 A2 N P P(R) OR OR(R) Q I`
+(`OR`/`OR(R)` are the fixed- and random-effects odds ratios; `Q`/`I` report
+heterogeneity).
 
 ## Using your own data
 
@@ -100,8 +101,8 @@ provide one fileset per cohort in `--data_dir` (`<cohort>.ped`, `<cohort>.map`,
 ### Notes on the PLINK steps
 
 - `--logistic beta` emits log-odds (`BETA`), so the meta-analysis uses
-  `logscale` to read the `BETA` column. (Drop `beta` and `logscale` together if
-  you prefer the odds-ratio scale.)
+  `logscale` to combine on the log-odds scale; PLINK still reports the pooled
+  effect as an odds ratio (`OR`/`OR(R)`), not `BETA`.
 - `--logistic` reads the case/control phenotype from the `.ped` 6th column.
   Ensure both cases (`2`) and controls (`1`) are present.
 - `--meta-analysis` is fixed-effect inverse-variance weighting and assumes
