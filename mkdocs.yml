@@ -63,6 +63,7 @@ plugins:
 nav:
   - Home: index.md
   - Examples:
+      - Federated PLINK GWAS: examples/plink-gwas.md
       - Federated Allele Frequency: examples/federated-af.md
   - Federation:
       - Dashboard: federation-dashboard.md

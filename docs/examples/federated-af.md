@@ -90,16 +90,29 @@ workflow {
 
 ## Run it
 
-Prerequisites: Docker Desktop, `bacalhau` v1.7.x, Nextflow 24.10.x on PATH
-(or `NEXTFLOW_BIN=...`; 25.x+ not yet supported), Java 17 (Nextflow runtime), Python 3.
+Prerequisites:
+
+- Docker Desktop (running)
+- `bacalhau` v1.7.x on PATH
+- Nextflow 24.10.x (LTS) on PATH (or `NEXTFLOW_BIN=...`); 25.x+ not yet supported
+- Java 17 for the Nextflow runtime (Nextflow 24.10 still runs on JDK 17)
+- Python 3
+- The [`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau) plugin — build it
+  from a local checkout (set `NF_BACALHAU_REPO`), or pre-install the plugin and
+  pass `--skip-build`
 
 ```bash
-./examples/federated-af/run.sh
+# build the plugin from a local checkout and stage it:
+NF_BACALHAU_REPO=/path/to/nf-bacalhau ./examples/federated-af/run.sh
+# ...or, if the plugin is already installed:
+./examples/federated-af/run.sh --skip-build
 ```
 
 The driver:
 
-1. Builds and stages the plugin into `~/.nextflow/plugins/`.
+1. Builds the `nf-bacalhau` plugin from `NF_BACALHAU_REPO` and stages it into
+   `~/.nextflow/plugins/` (skipped by `--skip-build`, which uses an
+   already-installed plugin).
 2. Starts a local Bacalhau node (if one isn't already on `:1234`).
 3. Generates three deterministic synthetic shards (no network download).
 4. Runs the Nextflow pipeline against them.
