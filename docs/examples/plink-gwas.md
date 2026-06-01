@@ -43,7 +43,7 @@ process runGWAS {
 
     script:
     """
-    ${INSTALL_PLINK}   // installs PLINK 1.9 from bioconda (x86_64 + arm64)
+    ${INSTALL_PLINK}
 
     plink \\
         --file  "/inputs/${name}" \\
@@ -86,6 +86,9 @@ workflow {
     metaAnalysis(runGWAS(cohorts).results.map { _name, assoc -> assoc }.collect())
 }
 ```
+
+`INSTALL_PLINK` (elided above) installs PLINK 1.9 from bioconda via micromamba,
+which builds on both x86_64 and arm64 Bacalhau nodes.
 
 `--logistic beta` emits log-odds (`BETA`), so the meta-analysis uses `logscale`
 to combine on the log-odds scale; PLINK still reports the pooled effect as an
