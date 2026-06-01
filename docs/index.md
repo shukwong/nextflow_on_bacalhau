@@ -5,8 +5,9 @@ each site's genotypes stay home; only aggregate statistics cross the network.**
 
 This is the research / federation documentation. The Nextflow executor that
 submits work to Bacalhau is a separate project —
-[`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau) — installed from the
-Nextflow Plugin Registry.
+[`nf-bacalhau`](https://github.com/shukwong/nf-bacalhau). For now, build it from
+a local checkout (set `NF_BACALHAU_REPO`); publishing to the Nextflow Plugin
+Registry is planned.
 
 ## The idea
 
@@ -17,10 +18,11 @@ back. The example runners assert this privacy invariant automatically.
 
 ## Examples
 
+- **[Federated PLINK GWAS](examples/plink-gwas.md)** — a per-cohort GWAS plus
+  inverse-variance meta-analysis; genotypes stay on-node, only per-SNP summary
+  statistics are pooled.
 - **[Federated allele-frequency demo](examples/federated-af.md)** — the privacy
   contract end to end against a local Bacalhau node.
-- **Federated PLINK GWAS** — a per-cohort GWAS plus inverse-variance
-  meta-analysis; see `examples/plink-gwas/README.md` in the repository.
 
 ## Running a federation
 
